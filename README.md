@@ -83,3 +83,8 @@ GNU General Public License version 3 or later. See [LICENSE.md](LICENSE.md) for 
 Bundled third-party code retains its original licences: MIT for pdf-annotate.js,
 text-clipper and jsPDF; Apache 2.0 for PDF.js and its supporting assets.
 See [thirdpartylibs.xml](thirdpartylibs.xml) and the bundled licence files for details.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
