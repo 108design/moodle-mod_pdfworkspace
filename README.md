@@ -1,70 +1,85 @@
-PDF Workspace for Moodle
+# PDF Workspace for Moodle
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Read, annotate and discuss PDFs within a Moodle course activity. Teachers can
+bring several documents together in one workspace, and participants can add
+markings and comments with the audiences allowed by the activity settings.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+## Features
 
-You should have received a copy of the GNU General Public License
-along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+- Multiple PDFs in one activity, with a tab for each document.
+- Drawing, highlighting, text, pin and area markings, with optional comment threads.
+- Configurable visibility for participant and staff annotations.
+- An overview of questions, answers, your own posts and reports.
+- Downloads of original PDFs, comments, annotated PDFs and selected workspace documents.
 
-PDF Workspace is a fork of RWTH Aachen's PDF Annotator. The original authorship
-and copyright notices are retained in files derived from that project. PDF
-Workspace changes are copyright 2026 Andreas Giesen <andreas@108design.com>.
-Fork maintainer: Andreas Giesen <andreas@108design.com> (108design).
-PDF Workspace is maintained and versioned independently of PDF Annotator.
-New plugin files carry that attribution alone; modified files also retain their
-original attribution. The plugin's new contributions are GPL v3 or later.
+The plugin targets Moodle 4.5 and later; check your required workflows with your
+Moodle version and theme before production use.
 
-Bundled third-party code keeps its original licence and notices:
+## Installation
 
-- MIT: Instructure's `pdf-annotate.js` code in `shared/index.js`, text-clipper,
-  and jsPDF. Their original licence notices remain in the files.
-- Apache 2.0: PDF.js 6.3.289 and its supporting assets under `shared/pdfjs/`.
-  Adapted PDF.js text-layer styles are identified in `shared/viewer.css`.
+1. Install the plugin as `mod/pdfworkspace` below Moodle's plugin directory.
+2. Complete installation through **Site administration → Notifications**.
+3. Add a **PDF Workspace** activity to a course and upload the PDFs.
+4. Configure annotation audiences and the downloads available to participants.
 
-See `thirdpartylibs.xml` and the licence files in the bundled PDF.js directories
-for the exact third-party components and terms. Unchanged vendor bundles,
-fonts, CMaps and binary assets retain their original metadata.
+For Moodle installations using the split web directory, the plugin belongs in
+`public/mod/pdfworkspace`. See Moodle's
+[plugin installation guide](https://docs.moodle.org/en/Installing_contributed_modules_or_plugins).
 
-### Installation:
+## Working with documents and comments
 
-- Unzip and copy "pdfworkspace" folder into Moodle's "mod" folder
-- Visit admin page to install module
+Choose a document tab, select an annotation tool and mark the PDF. A marking can
+stand on its own or start a comment thread. The activity settings control which
+audiences participants and staff may select. Replies keep the thread's audience.
 
-For further installation instructions please see: <http://docs.moodle.org/en/Installing_contributed_modules_or_plugins>
+Teachers with course editing permission can change the displayed document names.
+A PDF with existing annotations is protected from replacement or removal, so
+comments keep referring to the document on which they were made.
 
-Combined PDF and whole-workspace downloads additionally require **Python 3.11+ on the Moodle server**
-with **pypdf, ReportLab and cryptography (for AES-encrypted PDFs)**. Install the pinned
-packages from [`export/requirements.txt`](export/requirements.txt) in a separate virtual
-environment outside the public web root, then configure its interpreter in the PDF
-Workspace site-administration settings. PHP must allow `proc_open` and the interpreter
-path; the Moodle service account needs permission to run it. These prerequisites
-are installed separately and are not included in the plugin ZIP.
-The normal viewer, original-PDF and comments-only downloads work without Python.
-See [server setup (English)](export/README.md) or
-[Servereinrichtung (Deutsch)](export/README.de.md) for prerequisites and setup.
+## Downloads and activity settings
 
-### Workspace downloads
+The viewer's download menu separates the current PDF from the entire workspace.
+Original PDFs and comments-only downloads are available separately from combined
+PDFs containing visible markings and comments.
 
-The activity settings use one PDF list for removal, inclusion in the workspace download,
-and download order. Download order is independent of the viewer tabs. All initial PDFs
-are included; PDFs uploaded later start excluded and can be selected after saving.
-Documents with existing notes stay protected from removal.
+In the activity settings, use the PDF list to select documents for workspace
+downloads and arrange their download order. This order is independent of the
+viewer tabs. Initial PDFs are included; PDFs uploaded later start excluded and
+can be selected after saving. Document names become bookmarks in the combined PDF.
 
-The two rights `mod/pdfworkspace:downloadworkspace` and
-`mod/pdfworkspace:downloadworkspacecomments` are independent. Participants also need
-the matching activity setting enabled; teachers with the corresponding right do not.
-An explicit capability prohibition is respected. The commented export includes only
-the requesting user's visible markings and comments. Both variants use the same PDF
-selection and order, with document names as PDF bookmarks.
+The capabilities `mod/pdfworkspace:downloadworkspace` and
+`mod/pdfworkspace:downloadworkspacecomments` control the two workspace download
+variants independently. Participants also need the corresponding download option
+enabled in the activity. Teachers with the corresponding permission can download
+without that participant option; an explicit permission prohibition still applies.
+Commented exports contain only markings and comments visible to the requesting user.
+
+## Server requirements for combined downloads
+
+Combined PDF and workspace downloads additionally require **Python 3.11+ on the
+Moodle server**, with **pypdf, ReportLab and cryptography for AES-encrypted PDFs**.
+Install the pinned packages from [export/requirements.txt](export/requirements.txt)
+in a separate virtual environment outside the public web directory, and configure
+its interpreter in the PDF Workspace site-administration settings.
+
+PHP must allow `proc_open` and access to the interpreter path. The Moodle service
+account needs permission to run it. Python and these libraries are installed
+separately and are not included in the plugin ZIP. The normal viewer, original-PDF
+and comments-only downloads work without Python.
+
+See [server setup in English](export/README.md) or
+[Servereinrichtung auf Deutsch](export/README.de.md) for the complete instructions.
+
+## Maintainer and origin
+
+PDF Workspace is an independently maintained derivative of RWTH Aachen's PDF
+Annotator. Original authorship and copyright notices are retained.
+Workspace changes are copyright 2026 Andreas Giesen <andreas@108design.com> (108design).
+Maintained by Andreas Giesen.
 
 ## License
 
 GNU General Public License version 3 or later. See [LICENSE.md](LICENSE.md) for the full terms.
-Bundled third-party components retain their respective licences.
+Bundled third-party code retains its original licences: MIT for pdf-annotate.js,
+text-clipper and jsPDF; Apache 2.0 for PDF.js and its supporting assets.
+See [thirdpartylibs.xml](thirdpartylibs.xml) and the bundled licence files for details.

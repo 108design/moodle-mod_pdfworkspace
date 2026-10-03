@@ -3,16 +3,12 @@
 PDF Workspace integration documentation. Copyright 2026 Andreas Giesen
 <andreas@108design.com>. GPL v3 or later.
 
-The third toolbar download is generated on the Moodle server. `download_annotated.php`
-checks the requesting user's access, filters every annotation and comment, then invokes
-`combined_pdf.py`. The helper copies the original PDF pages, merges vector markings and
-adds visible comments as native PDF text notes. The original stored file is not changed.
+Combined downloads create a new PDF on the Moodle server. They preserve the
+original pages and add the requesting user's visible markings and comments.
+The stored source PDFs are not changed.
 
-`download_workspace.php` uses the same runtime to combine the teacher-selected PDFs
-in their configured download order, either as original pages or with the requesting
-user's visible markings and comments. Both routes share `classes/pdf_export.php`.
-The helper accepts a filtered document manifest and adds document bookmarks, while
-keeping the original single-PDF JSON interface available. No extra dependencies are needed.
+Workspace downloads combine the documents selected in the activity settings,
+in their configured download order, and add bookmarks using the document names.
 
 ## Server prerequisites
 
@@ -70,8 +66,7 @@ dependency versions. A plugin reinstall alone does not install Python libraries.
 ## Encrypted source PDFs
 
 An encrypted PDF that opens without a password is accepted when decryption with an
-empty password succeeds. pypdf's `is_encrypted` flag stays true after successful
-decryption, so it is not used as the final rejection condition. PDFs requiring an
+empty password succeeds. PDFs requiring an
 opening password remain unsupported; the plugin has no password-entry feature.
 AES requires the cryptography backend described above. See the
 [pypdf encryption guide](https://pypdf.readthedocs.io/en/6.10.0/user/encryption-decryption.html).

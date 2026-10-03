@@ -79,8 +79,7 @@ Plugin-ZIPs allein richtet keine Python-Bibliotheken ein.
 ## Verschlüsselte PDFs
 
 Verschlüsselte PDFs, die sich ohne Öffnungspasswort lesen lassen, werden akzeptiert,
-wenn die Entschlüsselung mit einem leeren Passwort gelingt. `is_encrypted` bleibt
-bei pypdf auch danach wahr und ist deshalb kein Ablehnungsgrund für sich allein.
+wenn die Entschlüsselung mit einem leeren Passwort gelingt.
 PDFs, die tatsächlich ein Öffnungspasswort benötigen, werden weiter abgewiesen;
 eine Passworteingabe ist im Plugin nicht vorgesehen. Für AES ist die oben genannte
 cryptography-Bibliothek nötig.
