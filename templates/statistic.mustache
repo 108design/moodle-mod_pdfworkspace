@@ -1,0 +1,46 @@
+{{!
+ PDF Workspace template.
+ Original: Copyright 2018 RWTH Aachen (PDF Annotator).
+ @copyright 2026 Andreas Giesen <andreas@108design.com>
+ @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="pdfworkspace-statistic">
+    
+    <div class="row">
+        <div class="col-md-6">
+            <table class = "generaltable table-bordered">
+                <thead>
+                    <tr>
+                        <th>{{#str}}statistic, pdfworkspace{{/str}}</th>
+                        <th>{{#str}}in_activity, pdfworkspace{{/str}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#tabledata}}
+                        <tr>
+                            {{#row}} <td>{{{.}}}</td> {{/row}}
+                        </tr>
+                    {{/tabledata}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-12">
+         <div id="chart_questions_answers" ></div> 
+      </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <div id="chart-container">
+                <canvas id="myChart"></canvas> 
+            </div>
+
+        </div>
+    </div>
+    
+</div>

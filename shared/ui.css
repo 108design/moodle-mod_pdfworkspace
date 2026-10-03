@@ -1,0 +1,1045 @@
+/*
+ * PDF Workspace user interface styles.
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* PDF Workspace controls. Kept separate from PDF.js geometry in viewer.css. */
+.path-mod-pdfworkspace #pdfworkspace_index {
+    --pdf-ui-ink: #302844;
+    --pdf-ui-muted: #655c76;
+    --pdf-ui-accent: #58417b;
+    --pdf-ui-accent-soft: #ede7f5;
+    --pdf-ui-border: #ddd8e5;
+    --pdf-ui-surface: #fbfaff;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #pdftoolbar {
+    background: var(--pdf-ui-surface);
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 10px 10px 0 0;
+    box-shadow: none;
+    padding: 7px 9px;
+    text-shadow: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent {
+    gap: 5px 3px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > .spacer {
+    align-self: center;
+    width: 1px;
+    height: 25px;
+    margin: 0 7px;
+    border: 0;
+    background: var(--pdf-ui-border);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .toolbaritem,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-marker-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    white-space: nowrap;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > a,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 5px 7px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    color: var(--pdf-ui-ink);
+    font-size: 16px;
+    line-height: 1;
+    text-decoration: none;
+    text-shadow: none;
+    vertical-align: middle;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button:hover:not(:disabled),
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > a:hover,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button:hover:not(:disabled) {
+    background: #f1edf6;
+    border-color: #ded3e9;
+    color: var(--pdf-ui-accent);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button.active,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.active,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button[data-active="true"] {
+    background: var(--pdf-ui-accent-soft);
+    border: 1px solid #cdbde1 !important;
+    color: var(--pdf-ui-accent);
+    box-shadow: inset 0 0 0 1px #e6daef;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button:focus-visible,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent a:focus-visible,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent select:focus-visible,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button:focus-visible,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav input:focus-visible {
+    outline: 2px solid #70549c;
+    outline-offset: 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button .icon,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .hideComments .icon,
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button .icon {
+    width: auto;
+    height: auto;
+    margin: 0;
+    color: currentColor !important;
+    font-size: inherit;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent :is(.hideComments, .pdfworkspace_print, .pdfworkspace_print_dropdown) .icon {
+    font-size: 20px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > a img,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent button img {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    object-fit: contain;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > a img {
+    opacity: 1;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent :is(.pdfworkspace_print, .pdfworkspace_print_dropdown) img {
+    filter: brightness(.45);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent select,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent #currentPage {
+    box-sizing: border-box;
+    min-height: 32px;
+    padding: 3px 7px;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--pdf-ui-ink);
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .marker-size {
+    height: 32px;
+    width: 3.8rem;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-audience {
+    gap: 6px;
+    padding: 0 3px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-audience label {
+    margin: 0;
+    color: var(--pdf-ui-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .color,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .color-selected {
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px #a59bad;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .color-selected {
+    box-shadow: 0 0 0 2px var(--pdf-ui-accent);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .marker-color,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pen-color,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .text-color {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 30px;
+    height: 32px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-color-open {
+    z-index: 1003;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-color-picker {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 1001;
+    display: grid;
+    grid-template-columns: repeat(4, 22px);
+    gap: 7px;
+    width: max-content;
+    padding: 9px;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(37 28 54 / 18%);
+    white-space: normal;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-color-picker .color {
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-wrapper {
+    background: #f8f7fb;
+    border-left: 1px solid var(--pdf-ui-border);
+    color: var(--pdf-ui-ink);
+}
+
+/* Comment actions use one pen icon; the Bootstrap chevron adds no second action. */
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message {
+    border-radius: 12px;
+    color: #111;
+}
+
+/* Replies are one neutral layer; ownership and status remain in the controls. */
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message.comment-list-item:not(.questioncomment, .questions, .mark) {
+    border: 0 !important;
+    background: #e9eaef;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message :is(.chat-message-text, .chat-message-text *,
+    .chat-message-meta, .chat-message-meta .user, .chat-message-meta .time, .edited,
+    .wrappervotessolved, .questionanswercount) {
+    color: #111 !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .chat-message-text a {
+    text-decoration: underline;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message.questions.page {
+    color: #111;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message.questions.page:is(:hover, :focus-visible) {
+    background-color: #e9f5e6 !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message.questions.page:focus-visible {
+    outline: 2px solid var(--pdf-ui-accent);
+    outline-offset: 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message:not(.questions) {
+    position: relative;
+    /* Cached theme CSS may still contain the legacy zero left padding. */
+    padding: 12px 14px !important;
+    gap: 8px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .chat-message-meta {
+    min-height: 28px;
+    padding-right: 42px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .chat-message-meta > .dropdown {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    float: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .comment-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .comment-menu-toggle:hover,
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .comment-menu-toggle:focus-visible {
+    background: rgba(48, 40, 68, .09);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .comment-menu-toggle::after {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .chat-message .comment-menu-toggle .icon {
+    margin: 0;
+    color: #4b4454 !important;
+    font-size: 15px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace_combined_download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 36px;
+    border-radius: 8px;
+    color: var(--pdf-ui-ink);
+    text-decoration: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace_combined_download:hover,
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace_combined_download:focus-visible {
+    background: #e9f1fb;
+    color: #285a91;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-merged-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+    background-color: currentColor;
+    -webkit-mask: var(--pdf-merged-icon) center / contain no-repeat;
+    mask: var(--pdf-merged-icon) center / contain no-repeat;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-wrapper > h4 {
+    margin: 12px 14px 8px;
+    color: var(--pdf-ui-ink);
+    font-size: 1.05rem;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-wrapper > .pdfworkspace-audience {
+    display: grid;
+    gap: 7px;
+    margin: 0 12px 12px;
+    padding: 10px 11px;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 9px;
+    background: #fff;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-wrapper > .pdfworkspace-audience[hidden] {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-row {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-row[hidden] {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-row label {
+    margin: 0;
+    color: var(--pdf-ui-muted);
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-row select {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 3px 28px 3px 8px;
+    font-size: .85rem;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-value {
+    min-width: 0;
+    padding: 5px 0;
+    color: var(--pdf-ui-ink);
+    font-size: .85rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-audience-value[hidden] {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions:not(.page) {
+    position: relative;
+    min-height: 70px;
+    padding: 12px 36px 38px 14px;
+    color: #111;
+    cursor: pointer;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions.questions-private:not(.page) {
+    color: #111;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions.questions-teacher:not(.page) {
+    background-color: #efe9f7;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions.questions-targeted:not(.page) {
+    background-color: #e8f4ee;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions:not(.page) .question-audience-icon {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    line-height: 14px;
+    margin: 0;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .questions-private .question-audience-icon {
+    color: #c8730c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index .questions:not(.questions-private, .questions-teacher, .questions-targeted) .question-audience-icon {
+    color: #1760a3;
+}
+.path-mod-pdfworkspace #pdfworkspace_index .questions-teacher .question-audience-icon {
+    color: #65458c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index .questions-targeted .question-audience-icon {
+    color: #236548;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions:not(.page) .icon-wrapper {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    display: inline-flex;
+    align-items: center;
+    float: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-replies-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 4px;
+    border: 1px solid rgba(0, 0, 0, .12);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .42);
+    color: #111;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-replies-button:is(:hover, :focus-visible) {
+    border-color: rgba(0, 0, 0, .26);
+    background: rgba(255, 255, 255, .82);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-replies-button:focus-visible {
+    outline: 2px solid var(--pdf-ui-accent);
+    outline-offset: 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-replies-button .questionanswercount {
+    margin: 0;
+    padding: 0;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-replies-button .icon {
+    color: currentColor !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions .morelink {
+    display: inline-flex;
+    align-items: center;
+    gap: .3em;
+    position: absolute;
+    bottom: 11px;
+    left: 14px;
+    margin: 0;
+    color: #111;
+    white-space: nowrap;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-item.questions .morelink .fa {
+    font-size: .8em;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 0 12px 12px;
+    padding: 4px;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 9px;
+    background: #fff;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .comment-visibility {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .spacer {
+    width: 1px;
+    height: 23px;
+    margin: 0 4px;
+    border: 0;
+    background: var(--pdf-ui-border);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .comment-public[data-active="true"] {
+    background: #e9f1fb;
+    border-color: #bdd2ee !important;
+    color: #285a91;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .comment-private[data-active="true"] {
+    background: #fff0df;
+    border-color: #ebc79c !important;
+    color: #92500c;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .comment-teacher[data-active="true"] {
+    background: #efe9f7;
+    border-color: #d0c0e6 !important;
+    color: #65458c;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav .comment-targeted[data-active="true"] {
+    background: #e8f4ee;
+    border-color: #b9d9c8 !important;
+    color: #236548;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-public:is(:hover, :focus-visible, [data-active="true"]) {
+    color: #285a91;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-private:is(:hover, :focus-visible, [data-active="true"]) {
+    color: #92500c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-teacher:is(:hover, :focus-visible, [data-active="true"]) {
+    color: #65458c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-targeted:is(:hover, :focus-visible, [data-active="true"]) {
+    color: #236548;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-public {
+    color: #285a91;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-private {
+    color: #92500c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-teacher {
+    color: #65458c;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #comment-nav button.comment-targeted {
+    color: #236548;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #searchForm {
+    flex: 1 1 100%;
+    margin: 4px 2px 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #searchPattern {
+    width: 100%;
+    height: 34px;
+    border-radius: 6px;
+}
+
+/* Moodle initializes TinyMCE itself. Limit only this module's comment UI. */
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-menubar,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-menubar,
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-statusbar,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-statusbar {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox.tox-tinymce,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox.tox-tinymce {
+    height: 240px !important;
+    min-height: 240px !important;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-editor-header,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-editor-header {
+    display: flex;
+    align-items: center;
+    padding: 2px 0;
+    border-bottom: 1px solid var(--pdf-ui-border);
+    box-shadow: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__primary > .tox-toolbar__group,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__primary > .tox-toolbar__group,
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__overflow > .tox-toolbar__group,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__overflow > .tox-toolbar__group {
+    display: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__group:has(> [data-mce-name="bold"]),
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__group:has(> [data-mce-name="bold"]),
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__group:has(> [data-mce-name="bullist"]),
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__group:has(> [data-mce-name="bullist"]) {
+    display: inline-flex;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__overflow,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__overflow {
+    display: inline-flex !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    background: transparent;
+    box-shadow: none;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-sidebar-wrap,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-sidebar-wrap {
+    height: 180px !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar-overlord,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar-overlord {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 1px 3px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-list-form .tox-toolbar__group,
+.path-mod-pdfworkspace #pdfworkspace_index .edit-comment-form .tox-toolbar__group {
+    padding: 0 1px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index :is(.comment-list-form, .edit-comment-form) .tox-tbtn {
+    width: 30px;
+    height: 30px;
+    margin: 0 1px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index :is(.comment-list-form, .edit-comment-form) .tox-tbtn svg {
+    width: 24px;
+    height: 24px;
+    transform: scale(.82);
+    transform-origin: center;
+}
+
+@media (max-width: 700px) {
+    .path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > .spacer {
+        margin: 0 3px;
+    }
+
+    .path-mod-pdfworkspace #pdfworkspace_index #comment-wrapper > h4 {
+        font-size: 1.05rem;
+    }
+}
+/* One activity can contain several PDFs; keep the document switch above the viewer controls. */
+.pdfworkspace-documentbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .5rem;
+    flex: 0 0 auto;
+}
+.pdfworkspace-documentbar .pdfworkspace-documenttabs { flex: 1 1 auto; min-width: 0; }
+/* Native Moodle download menu, sized like the neighboring toolbar selects. */
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-sizing: border-box;
+    min-height: 32px;
+    padding: 3px 7px;
+    border: 1px solid var(--pdf-ui-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--pdf-ui-ink);
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-toggle:hover,
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-toggle[aria-expanded="true"] {
+    background: var(--pdf-ui-accent-soft);
+    border-color: #cdbde1;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-menu {
+    max-width: calc(100vw - 2rem);
+    font-size: 14px;
+    white-space: normal;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--pdf-ui-ink);
+    white-space: normal;
+    text-decoration: none;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .icon {
+    flex: 0 0 auto;
+    color: currentColor;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-header {
+    margin: 0;
+    padding: .1rem 0;
+    font-size: 12px;
+}
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent .pdfworkspace-download-menu .dropdown-item:has(.dropdown-divider) {
+    padding: 0;
+}
+.pdfworkspace-documenttabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: .375rem;
+    overflow-x: auto;
+    padding: 1.35rem .25rem .5rem;
+    scrollbar-width: thin;
+}
+.pdfworkspace-documenttab {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    max-width: min(18rem, 70vw);
+    white-space: nowrap;
+    padding: .35rem .65rem;
+    border: 1px solid #d8d5e0;
+    border-radius: .7rem;
+    color: #403b50;
+    background: #fff;
+    font-weight: 500;
+    text-decoration: none;
+}
+.pdfworkspace-documenttab .inplaceeditable {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+    gap: .25rem;
+}
+.pdfworkspace-documenttab-link {
+    display: inline-block;
+    min-width: 0;
+    max-width: 15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: .12rem .2rem;
+    color: inherit;
+    text-decoration: none;
+}
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-documenttab-link:hover,
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-documenttab-link:focus {
+    text-decoration: none;
+}
+.pdfworkspace-documenttab .quickeditlink {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    color: inherit;
+    border-radius: .35rem;
+}
+.pdfworkspace-documenttab :is(.quickeditlink, .pdfworkspace-documenttab-link):focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+.pdfworkspace-documenttab input {
+    max-width: min(15rem, 55vw);
+}
+.pdfworkspace-documenttab:hover,
+.pdfworkspace-documenttab:focus-visible {
+    color: #33265b;
+    border-color: #8472b5;
+    text-decoration: none;
+}
+.pdfworkspace-documenttab.is-active {
+    color: #fff;
+    border-color: #493578;
+    background: #493578;
+}
+
+/* Overview is a single activity workspace, with persistent second-level links. */
+.path-mod-pdfworkspace .pdfworkspace-overview-nav {
+    position: sticky;
+    top: 4rem;
+    z-index: 5;
+    display: flex;
+    gap: .35rem;
+    overflow-x: auto;
+    padding: .75rem .1rem;
+    background: var(--bs-body-bg, #fff);
+    border-bottom: 1px solid var(--bs-border-color, #ddd);
+    scrollbar-width: thin;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    flex: 0 0 auto;
+    padding: .48rem .8rem;
+    border: 1px solid var(--bs-border-color, #d8d5e0);
+    border-radius: .7rem;
+    color: var(--bs-body-color, #403b50);
+    background: var(--bs-body-bg, #fff);
+    text-decoration: none;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-pill:is(:hover, :focus-visible) {
+    border-color: #6b58a0;
+    text-decoration: none;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-pill.is-active {
+    color: #fff;
+    background: #493578;
+    border-color: #493578;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-pill:focus-visible {
+    outline: 2px solid #6b58a0;
+    outline-offset: 2px;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-filters {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: .65rem;
+    margin: .75rem 0 1.25rem;
+    padding: .85rem;
+    border: 1px solid var(--bs-border-color, #e4e1ea);
+    border-radius: .8rem;
+    background: var(--bs-secondary-bg, #f7f6fa);
+}
+.path-mod-pdfworkspace .pdfworkspace-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    width: auto;
+    min-width: 9rem;
+    max-width: min(18rem, 100%);
+    margin: 0;
+    font-size: .88rem;
+    font-weight: 600;
+}
+.path-mod-pdfworkspace .pdfworkspace-filter-field .form-select {
+    width: auto;
+    min-width: 9rem;
+    max-width: 100%;
+    font-size: .95rem;
+    font-weight: 400;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-filters .btn {
+    white-space: nowrap;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table :is(th, td) {
+    width: auto !important;
+    min-width: 0;
+    vertical-align: top;
+    padding: .75rem .65rem;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--bs-border-color, #e2dfe8);
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table :is(th, td):first-child {
+    width: 42% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):first-child {
+    width: 37% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):nth-child(2) {
+    width: 17% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):nth-child(3) {
+    width: 17% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-votes :is(th, td):nth-child(3) {
+    width: 7% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-votes :is(th, td):nth-child(4) {
+    width: 17% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):last-child {
+    width: auto !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-actions :is(th, td):last-child {
+    width: 5rem !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):first-child {
+    width: 32% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):nth-child(2) {
+    width: 39% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):nth-child(3) {
+    width: 19% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-posts-table :is(th, td):first-child {
+    width: 56% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-posts-table :is(th, td):nth-child(2) {
+    width: 18% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-posts-table.pdfworkspace-has-votes :is(th, td):first-child {
+    width: 48% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-posts-table.pdfworkspace-has-votes :is(th, td):nth-child(3) {
+    width: 8% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):first-child,
+.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):nth-child(2) {
+    width: 35% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):nth-child(3) {
+    width: 20% !important;
+}
+.path-mod-pdfworkspace .pdfworkspace-has-actions :is(th, td):last-child {
+    width: 5rem !important;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: .25rem;
+    white-space: nowrap;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--bs-border-color, #d8d5e0);
+    border-radius: .5rem;
+    color: var(--bs-body-color, #403b50);
+    background: var(--bs-body-bg, #fff);
+    text-decoration: none;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-action :is(.icon, .fa) {
+    margin: 0;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-action:is(:hover, :focus-visible) {
+    border-color: #6b58a0;
+    color: #493578;
+    background: var(--bs-secondary-bg, #f7f6fa);
+    text-decoration: none;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-action:focus-visible {
+    outline: 2px solid #6b58a0;
+    outline-offset: 2px;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-author,
+.path-mod-pdfworkspace .pdfworkspace-overview-answer-count {
+    font-weight: 600;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-answer-label {
+    margin-top: .5rem;
+    color: var(--bs-secondary-color, #666);
+    font-size: .82rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-meta {
+    color: var(--bs-secondary-color, #666);
+    font-size: .86rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table td :is(p, div) {
+    max-width: 100%;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-page {
+    display: block;
+    color: var(--bs-secondary-color, #666);
+}
+@media (max-width: 900px) {
+    .path-mod-pdfworkspace .pdfworkspace-overview-nav { top: 0; }
+    .path-mod-pdfworkspace .pdfworkspace-overview-filters { align-items: stretch; }
+    .path-mod-pdfworkspace .pdfworkspace-filter-field { flex: 1 1 9rem; }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table,
+    .path-mod-pdfworkspace .pdfworkspace-overview-table tbody,
+    .path-mod-pdfworkspace .pdfworkspace-overview-table tr,
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td {
+        display: block !important;
+        width: 100% !important;
+    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table tr {
+        margin: .75rem 0;
+        padding: .45rem .75rem;
+        border: 1px solid var(--bs-border-color, #d8d5e0);
+        border-radius: .8rem;
+        background: var(--bs-body-bg, #fff);
+    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td {
+        display: flex !important;
+        gap: .75rem;
+        min-width: 0;
+        padding: .4rem .2rem;
+        border: 0;
+    }
+    .path-mod-pdfworkspace :is(.pdfworkspace-overview-table, .pdfworkspace-overview-table.pdfworkspace-has-votes)
+        :is(th, td):nth-child(n) {
+        width: 100% !important;
+    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td:first-child {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0;
+        font-weight: 600;
+    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td:not(:first-child)::before {
+        content: attr(data-label);
+        flex: 0 0 7rem;
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--bs-secondary-color, #666);
+    }
+}

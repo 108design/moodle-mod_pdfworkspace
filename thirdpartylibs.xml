@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!-- Original: Copyright 2018 RWTH Aachen (PDF Annotator).
+     Modifications: Copyright 2026 Andreas Giesen <andreas@108design.com>.
+     SPDX-License-Identifier: GPL-3.0-or-later. -->
+<libraries>
+    <library>
+        <location>shared/index.js</location>
+        <name>index.js</name>
+        <version></version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>shared/pdfjs</location>
+        <name>PDF.js (legacy browser build and supporting assets)</name>
+        <version>6.3.289</version>
+        <license>Apache</license>
+        <licenseversion>2.0</licenseversion>
+    </library>
+    <library>
+        <location>shared/textclipper.js</location>
+        <name>textclipper.js</name>
+        <version></version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+    <library>
+        <location>amd/src/jspdf.js</location>
+        <name>jsPDF</name>
+        <version>2.5.1</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+</libraries>

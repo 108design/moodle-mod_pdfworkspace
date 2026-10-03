@@ -1,0 +1,87 @@
+{{!
+ PDF Workspace template.
+ Original: Copyright 2018 RWTH Aachen (PDF Annotator).
+ @copyright 2026 Andreas Giesen <andreas@108design.com>
+ @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+{{#comments }}
+    <div class="{{ wrapperClass }} {{dimmed}}" id="comment_{{ uuid }}">
+
+        <div class="wrappervotessolved">
+            <div class="solved">{{#solvedicon}} <i class="{{classes}}" title="{{title}}"></i> {{/solvedicon}}</div>
+            {{^ isdeleted }} {{# usevotes }}
+            <button class="comment-like-a btn-link" title="{{ voteBtn }}" alt="{{ voteBtn }}">
+                <i class="icon fa fa-thumbs-up fa-fw" title="{{ voteBtn }}" alt="{{ voteBtn }}"></i>
+            </button>
+                <div class="countVotes" title="{{ voteTitle }}"> {{{ votes }}} </div>
+            {{/ usevotes }} {{/ isdeleted }}
+        </div>
+ 
+        <div class="chat-message-container">
+
+            <div class="chat-message-meta">
+                {{# dropdown }}
+                    <div class="dropdown">
+                        <button type="button" class="dropdown-toggle comment-menu-toggle" id="comment-menu-toggle-{{uuid}}"
+                            data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            aria-controls="comment-menu-{{uuid}}" aria-label="{{# str }} actiondropdown, pdfworkspace {{/ str }}"
+                            title="{{# str }} actiondropdown, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-pencil fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-end" id="comment-menu-{{uuid}}">
+                            {{# report }}
+                                <span class="comment-report-button">
+                                    <form action="view.php" method="POST">
+                                        <input type="hidden" name="coursemodule" value="{{ cm }}">
+                                        <input type="hidden" name="commentid" value="{{ uuid }}">
+                                        <input type="hidden" name="action" value="report">
+                                        <input type="hidden" name="id" value="{{ cmid }}">
+                                            <button class="dropdown-item comment-report-a" title="{{# str }} toreport, pdfworkspace {{/ str }}">
+                                                {{# pix }}flagged,pdfworkspace, {{# str }} toreport, pdfworkspace {{/ str }} {{/ pix}} {{# str }} toreport, pdfworkspace {{/ str }}                                     
+                                            </button>
+                                    </form>
+                                </span>
+                            {{/ report }}
+                            {{#buttons}}
+                                    <button class="dropdown-item {{classes}}" type=button {{#attributes}} {{name}}="{{&value}}"{{/attributes}}>
+                                        {{#moodleicon}} {{#pix}} {{key}},{{component}},{{title}} {{/pix}} {{/moodleicon}}
+                                        {{#faicon}} <i class=" icon fa {{class}} fa-fw"></i> {{/faicon}}
+                                        <span class="menu-action-text">
+                                            {{text}}
+                                        </span>
+                                    </button>
+                            {{/buttons}}
+                        </div>
+                    </div>
+                {{/ dropdown }}
+                {{^ isdeleted }}  
+                    <span class="time"> {{ timecreated }} </span>
+                    <span class="user"> {{ username }} </span>
+                {{/ isdeleted }}
+            </div>
+           
+            <div class="chat-message-text">
+                <div id="chatmessage{{ uuid }}">{{{ displaycontent }}}</div>
+                
+                {{#displayhidden}}<span id="taghidden{{uuid}}" class="tag tag-info">{{# str }} hiddenforparticipants, pdfworkspace {{/ str }}</span>{{/displayhidden}}
+
+                <form id="edit{{ uuid }}" class="edit-comment-form" style="display:none;">
+                    <div class="editor-loader-placeholder-edit-{{ uuid }}"></div>
+                    <input id="editCommentSubmit_{{uuid}}" class="owner btn btn-primary mb-1" type="submit" value="{{# str }} editButton, pdfworkspace {{/ str }}">
+                    <input id="editCommentCancel_{{uuid}}" class="owner btn btn-secondary mb-1" type="reset" value="{{# str }} cancelButton, pdfworkspace {{/ str }}" >
+                </form>
+         
+            </div>
+                {{^ isdeleted }}
+                    <em class="edited">
+                        {{# edited }}
+                            <div>
+                                <span id="timemodified_{{ uuid }}">{{# str }} editedComment, pdfworkspace {{/ str }} {{timemodified}}</span>
+                                <span id="modifiedby_{{ uuid }}">{{modifiedby}}</span>
+                            </div>
+                        {{/ edited }}
+                    </em>
+                {{/ isdeleted }}
+        </div>
+    </div>
+{{/ comments }}

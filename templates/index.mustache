@@ -1,0 +1,188 @@
+{{!
+ PDF Workspace template.
+ Original: Copyright 2018 RWTH Aachen (PDF Annotator).
+ @copyright 2026 Andreas Giesen <andreas@108design.com>
+ @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<!--working:-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>-->
+
+<div id='pdfworkspace_index' class='pdfworkspace_index'>
+
+    <div class="pdfworkspace-documentbar">
+    {{#hasdocumenttabs}}
+    <nav class="pdfworkspace-documenttabs" aria-label="{{#str}}documenttabs,pdfworkspace{{/str}}">
+        {{#documenttabs}}
+        <span class="pdfworkspace-documenttab{{#active}} is-active{{/active}}"{{#active}} aria-current="page"{{/active}}>{{{editablehtml}}}</span>
+        {{/documenttabs}}
+    </nav>
+    {{/hasdocumenttabs}}
+    </div>
+
+    <div class="row">
+        <div id="pdftoolbar" class="toolbar col-md-12">
+            <div id="toolbarContent"> 
+                <button id="pdfworkspace_cursor" class="cursor" type="button" title="Cursor" aria-label="Cursor" data-tooltype="cursor"><i class="fa fa-hand-pointer-o" aria-hidden="true"></i></button>
+                <div class="spacer"></div>
+                <button class="comment" type="button" title="{{# str }} point, pdfworkspace {{/ str }}" aria-label="{{# str }} point, pdfworkspace {{/ str }}" data-tooltype="point"><i class="fa fa-map-marker" aria-hidden="true"></i></button>
+                <button class="pdfworkspace_rectangle" type="button" title="{{# str }} rectangle, pdfworkspace {{/ str }}" aria-label="{{# str }} rectangle, pdfworkspace {{/ str }}" data-tooltype="area"><i class="fa fa-square-o" aria-hidden="true"></i></button>
+                <div class="spacer"></div>
+
+                {{#usestudenttextbox}}
+                    <span class="toolbaritem">
+                        <button class="pdfworkspace_text text" type="button" title="{{# str }} text, pdfworkspace {{/ str }}" aria-label="{{# str }} text, pdfworkspace {{/ str }}" data-tooltype="text"><i class="fa fa-font" aria-hidden="true"></i></button>
+                        <select class="text-size" aria-label="{{# str }} text, pdfworkspace {{/ str }}"></select>
+                        <div class="text-color"></div>
+                    </span>
+                    <div class="spacer"></div>
+                {{/usestudenttextbox}}
+
+                {{#usestudentdrawing}}
+                    <span class="toolbaritem">
+                        <button class="pen" type="button" title="{{# str }} pen_shift_hint, pdfworkspace {{/ str }}" aria-label="{{# str }} pen_shift_hint, pdfworkspace {{/ str }}" data-tooltype="draw"><i class="fa fa-pencil" aria-hidden="true"></i></button>
+                        <select class="pen-size" aria-label="{{# str }} drawing, pdfworkspace {{/ str }}"></select>
+                        <div class="pen-color"></div>
+                    </span>
+                    <div class="spacer" aria-hidden="true"></div>
+                    <span class="toolbaritem pdfworkspace-marker-controls">
+                        <button class="marker" type="button" title="{{# str }} marker, pdfworkspace {{/ str }}" aria-label="{{# str }} marker, pdfworkspace {{/ str }}" data-tooltype="marker"><i class="fa fa-highlighter" aria-hidden="true"></i></button>
+                        <select class="marker-size" aria-label="{{# str }} markersize, pdfworkspace {{/ str }}"></select>
+                        <div class="marker-color"></div>
+                    </span>
+                    <div class="spacer"></div>
+                {{/usestudentdrawing}}
+
+                <span class="toolbaritem pdfworkspace-history-controls">
+                    <button id="pdfworkspace-undo" type="button" title="{{# str }} undo, pdfworkspace {{/ str }}" aria-label="{{# str }} undo, pdfworkspace {{/ str }}" disabled><i class="fa fa-undo" aria-hidden="true"></i></button>
+                    <button id="pdfworkspace-redo" type="button" title="{{# str }} redo, pdfworkspace {{/ str }}" aria-label="{{# str }} redo, pdfworkspace {{/ str }}" disabled><i class="fa fa-repeat" aria-hidden="true"></i></button>
+                </span>
+                <div class="spacer"></div>
+
+                <span class="toolbaritem">
+                    <button id="scaleMinus" type="button" title="{{# str }} zoomout, pdfworkspace {{/ str }}" aria-label="{{# str }} zoomout, pdfworkspace {{/ str }}">
+                        <i class="icon fa fa-minus" aria-hidden="true"></i>
+                    </button><!--
+                 --><button id="scalePlus" type="button" title="{{# str }} zoomin, pdfworkspace {{/ str }}" aria-label="{{# str }} zoomin, pdfworkspace {{/ str }}">
+                        <i class="icon fa fa-plus" aria-hidden="true"></i>
+                    </button>
+                </span>
+                <select class="scale" title="{{# str }} zoom, pdfworkspace {{/ str }}">
+                    <option value="0.5">50%</option>
+                    <option value="0.75">75%</option>
+                    <option value="1">100%</option>
+                    <option value="1.33">133%</option>
+                    <option value="1.5">150%</option>
+                    <option value="2">200%</option>
+                </select>
+
+                <!--<a href="javascript://" class="rotate-ccw" title="Rotate Counter Clockwise">⟲</a>-->
+                <!--<a href="javascript://" class="rotate-cw" title="Rotate Clockwise">⟳</a>-->
+
+                <div class="spacer"></div>
+
+                <button type="button" class="hideComments" title="{{# str }} hideAnnotations, pdfworkspace {{/ str }}" aria-label="{{# str }} hideAnnotations, pdfworkspace {{/ str }}" aria-pressed="false"><i class="icon fa fa-eye-slash" aria-hidden="true"></i></button>
+                <a href="javascript://" class="pdfworkspace-fullscreen-toggle" title="{{# str}}fullscreen,pdfworkspace{{/str}}" aria-label="{{# str}}fullscreen,pdfworkspace{{/str}}" onclick="makeFullScreen()">{{# pix}}fullscreen,pdfworkspace,{{# str}}fullscreen,pdfworkspace{{/str}}{{/ pix}}</a>
+                <div class="spacer"></div>
+
+                <span class="toolbaritem">
+                    <button id="prevPage" type="button" title="{{# str }} prevPage, pdfworkspace {{/ str }}" aria-label="{{# str }} prevPage, pdfworkspace {{/ str }}">
+                        <i class="icon fa fa-chevron-up" aria-hidden="true"></i>
+                    </button><!--
+                  --><button id="nextPage" type="button" title="{{# str }} nextPage, pdfworkspace {{/ str }}" aria-label="{{# str }} nextPage, pdfworkspace {{/ str }}">
+                        <i class="icon fa fa-chevron-down" aria-hidden="true"></i>
+                     </button>
+                    <input id="currentPage" title="{{# str }} currentPage, pdfworkspace {{/ str }}" type="number" min="1" value="1"> / 
+                    <span id="sumPages" title="{{# str }} sumPages, pdfworkspace {{/ str }}">1</span>
+                </span>
+
+                <div class="spacer"></div>
+
+                {{#downloadmenuhtml}}
+                    <div class="toolbaritem pdfworkspace-download-menu">{{{downloadmenuhtml}}}</div>
+                {{/downloadmenuhtml}}
+
+            </div>
+        </div>
+    </div>
+
+
+
+  
+    <div class="row-fluid row" id="body-wrapper">
+        <div class="span8 col-lg-8" id="content-wrapper">
+            <div id="viewer" class="pdfViewer"></div>
+        </div>
+        <div class="span4 col-lg-4" id="comment-wrapper">
+                <h4>{{# str }} questionstitle, pdfworkspace {{/ str }}</h4>
+                <div id="comment-nav">
+                    <button id="allQuestions" class="btn-link" type="button" title="{{#str}}allquestionsimgtitle, pdfworkspace{{/str}}" aria-label="{{#str}}allquestionsimgtitle, pdfworkspace{{/str}}">
+                        <i class="icon fa fa-file-pdf-o fa-fw" aria-hidden="true"></i>
+                    </button>
+                    <button id="questionsOnThisPage" class="btn-link" type="button" title="{{#str}}questionsimgtitle, pdfworkspace{{/str}}" aria-label="{{#str}}questionsimgtitle, pdfworkspace{{/str}}">
+                        <i class="icon fa fa-file-text-o fa-fw" aria-hidden="true"></i>
+                    </button>
+                    <span class="comment-visibility">
+                        <span class="spacer" visiblewidth="1"></span>
+                        <button id="showAllComments" class="comment-visibility-button comment-all" type="button" data-active="true" title="{{# str }} comments_text_all, pdfworkspace {{/ str }}" aria-label="{{# str }} comments_text_all, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-comments fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <button id="showPublicComments" class="comment-visibility-button comment-public" type="button" data-active="false" title="{{# str }} comments_text_public, pdfworkspace {{/ str }}" aria-label="{{# str }} comments_text_public, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-globe fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <button id="showPrivateComments" class="comment-visibility-button comment-private" type="button" data-active="false" title="{{# str }} comments_text_private, pdfworkspace {{/ str }}" aria-label="{{# str }} comments_text_private, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-lock fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <button id="showTeacherComments" class="comment-visibility-button comment-teacher" type="button" data-active="false" title="{{# str }} comments_text_teacher, pdfworkspace {{/ str }}" aria-label="{{# str }} comments_text_teacher, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-graduation-cap fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <button id="showTargetedComments" class="comment-visibility-button comment-targeted" type="button" data-active="false" title="{{# str }} comments_text_targeted, pdfworkspace {{/ str }}" aria-label="{{# str }} comments_text_targeted, pdfworkspace {{/ str }}">
+                            <i class="icon fa fa-user fa-fw" aria-hidden="true"></i>
+                        </button>
+                        <span class="spacer" visiblewidth="1"></span>
+                    </span>
+                    <button id="searchButton" class="btn-link" type="button" title="{{# str }} search, pdfworkspace {{/ str }}" aria-label="{{# str }} search, pdfworkspace {{/ str }}">
+                        <i class="icon fa fa-search fa-fw" aria-hidden="true"></i>
+                    </button>
+                    <form id="searchForm">
+                        <input type="search" id="searchPattern" class="form-control" name="pattern" placeholder="{{#str}}search, pdfworkspace{{/str}}">      
+                        <button type="submit" id="searchClear">
+                            <i class="icon fa fa-times fa-fw"></i>
+                        </button>
+                    </form>                    
+                </div>
+                {{#showaudience}}
+                <div class="pdfworkspace-audience" role="group" aria-label="{{#str}}annotationaudience,pdfworkspace{{/str}}" hidden>
+                    <div class="pdfworkspace-audience-row">
+                        <label for="pdfworkspace-audience">{{#str}}annotationaudience,pdfworkspace{{/str}}</label>
+                        <select id="pdfworkspace-audience" class="form-select form-control">
+                            {{#audiences}}<option value="{{value}}"{{#selected}} selected{{/selected}}>{{label}}</option>{{/audiences}}
+                        </select>
+                        <span id="pdfworkspace-thread-audience" class="pdfworkspace-audience-value" hidden></span>
+                    </div>
+                    {{#allowtargeted}}
+                    <div id="pdfworkspace-recipient-control" class="pdfworkspace-audience-row" hidden>
+                        <label for="pdfworkspace-recipient">{{#str}}annotationrecipient,pdfworkspace{{/str}}</label>
+                        <select id="pdfworkspace-recipient" class="form-select form-control">
+                            <option value="0">{{#str}}annotationrecipient_none,pdfworkspace{{/str}}</option>
+                            {{#recipients}}<option value="{{id}}">{{name}}</option>{{/recipients}}
+                        </select>
+                    </div>
+                    {{/allowtargeted}}
+                </div>
+                {{/showaudience}}
+            <div class="pdfworkspace-comment-list">
+                <div class="comment-list-container">
+
+                </div>
+                <form id="comment-list-form" class="comment-list-form" style="display:none;">
+                    <div class="editor-loader-placeholder-add"></div>
+                                       
+                    <input id="commentSubmit" name="commentSubmit" class="owner btn btn-primary mb-1" type="submit" value="{{# str }} answerButton, pdfworkspace {{/ str }}">
+                    <input id="commentCancel" name="commentCancel" class="owner btn btn-secondary" type="reset" value="{{# str }} cancelButton, pdfworkspace {{/ str }}" >
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>

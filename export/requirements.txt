@@ -1,0 +1,4 @@
+# PDF Workspace export dependencies. Copyright 2026 Andreas Giesen <andreas@108design.com>.
+# SPDX-License-Identifier: GPL-3.0-or-later
+pypdf[crypto]==6.10.0
+reportlab==4.4.9

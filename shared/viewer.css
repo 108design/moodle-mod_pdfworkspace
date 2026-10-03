@@ -1,0 +1,208 @@
+/*
+ * PDF Workspace viewer geometry.
+ * Original: 2018 RWTH Aachen (PDF Annotator); Mozilla PDF.js TextLayer geometry (Apache-2.0).
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * The PDF.js portions remain under Apache-2.0; see shared/pdfjs/LICENSE.
+ */
+
+/* TextLayer geometry from PDF.js 6.3.289 (Apache-2.0); scoped to this activity. */
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer {
+    position: absolute;
+    text-align: initial;
+    inset: 0;
+    overflow: clip;
+    line-height: 1;
+    text-size-adjust: none;
+    forced-color-adjust: none;
+    transform-origin: 0 0;
+    z-index: 20;
+    opacity: 1;
+    --min-font-size: 1;
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0 0;
+    user-select: text;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer > :not(.markedContent, .helperLayer),
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer .markedContent span:not(.markedContent) {
+    z-index: 1;
+    --font-height: 0;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    --scale-x: 1;
+    --rotate: 0deg;
+    transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer .markedContent {
+    display: contents;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer ::selection {
+    color: transparent;
+    background: rgba(0, 0, 255, 0.25);
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer br::selection {
+    background: transparent;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer[data-main-rotation="90"] {
+    transform: rotate(90deg) translateY(-100%);
+}
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer[data-main-rotation="180"] {
+    transform: rotate(180deg) translate(-100%, -100%);
+}
+.path-mod-pdfworkspace #pdfworkspace_index .textLayer[data-main-rotation="270"] {
+    transform: rotate(270deg) translateX(-100%);
+}
+
+.path-mod-pdfworkspace.fullscreenWrapper {
+    overflow: hidden;
+}
+
+.path-mod-pdfworkspace.fullscreenWrapper > #pdfworkspace_index {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100dvh;
+    padding: 12px;
+    margin: 0;
+    background: #fff;
+    isolation: isolate;
+}
+
+.path-mod-pdfworkspace.fullscreenWrapper #pdfworkspace_index > .row {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.path-mod-pdfworkspace.fullscreenWrapper #body-wrapper {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto !important;
+}
+
+.path-mod-pdfworkspace.fullscreenWrapper #pdftoolbar {
+    position: relative !important;
+    top: auto !important;
+    width: 100% !important;
+}
+
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfViewer .page {
+    border: 0;
+    box-sizing: content-box;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > * {
+    flex: 0 0 auto;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index #toolbarContent > .spacer {
+    margin: 0 5px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-marker-controls,
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-history-controls {
+    white-space: nowrap;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-marker-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 34px;
+    vertical-align: middle;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .pdfworkspace-marker-controls .marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .marker-size {
+    width: 3.5rem;
+    height: 30px;
+    margin: 0;
+    padding: 0 2px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .marker-color {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 30px;
+    z-index: 100;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .marker-color > .color {
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-teacher[data-active="true"] {
+    border-bottom: 2px solid #7155a4 !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .comment-targeted[data-active="true"] {
+    border-bottom: 2px solid #327861 !important;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .question-channel-icon {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 16px;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .questions-teacher {
+    background-color: #f0ebf8;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .questions-teacher .question-channel-icon {
+    color: #7155a4;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .questions-targeted {
+    background-color: #e8f4ef;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .questions-targeted .question-channel-icon {
+    color: #327861;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .toolbar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.path-mod-pdfworkspace #pdfworkspace_index .cursor-pen .textLayer {
+    pointer-events: none;
+}

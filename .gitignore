@@ -1,0 +1,18 @@
+
+# Private development notes and artifacts are never published.
+PROJECT_*.md
+AGENTS.md
+CLAUDE.md
+*HANDOVER*.md
+.agents/
+.codex/
+.claude/
+workspace/
+node_modules/
+__pycache__/
+*.pyc
+*.zip
+*.bundle
+.env
+.env.*
+!.env.example

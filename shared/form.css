@@ -1,0 +1,107 @@
+/*
+ * PDF Workspace activity form styles.
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* PDF Workspace activity form: one clear action row per stored document. */
+#id_existingdocuments [data-name="documentcolumns"] { width: 100%; }
+#id_existingdocuments .pdfworkspace-document-columns,
+#id_existingdocuments [data-groupname^="documentrow_"] .felement > div > .d-flex,
+#id_existingdocuments .pdfworkspace-document-row {
+    display: grid !important;
+    grid-template-columns: 2rem minmax(7rem, 1fr) 7.5rem 7rem;
+    align-items: center;
+    gap: .6rem;
+    width: 100%;
+}
+#id_existingdocuments .pdfworkspace-document-columns {
+    font-size: .85rem;
+    font-weight: 600;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+#id_existingdocuments .pdfworkspace-document-row > *,
+#id_existingdocuments .pdfworkspace-document-row .form-check {
+    margin: 0 !important;
+    min-width: 0;
+}
+#id_existingdocuments .pdfworkspace-document-row .form-check { padding-left: 0; }
+#id_existingdocuments .pdfworkspace-document-row input[type="checkbox"] {
+    position: static;
+    margin: 0;
+    cursor: pointer;
+}
+#id_existingdocuments .pdfworkspace-document-row input:disabled { cursor: not-allowed; opacity: .45; }
+#id_existingdocuments .pdfworkspace-document-row input[type="number"] { width: 4rem; }
+#id_existingdocuments .pdfworkspace-order-controls {
+    display: flex;
+    align-items: center;
+    gap: .15rem;
+    white-space: nowrap;
+}
+#id_existingdocuments .pdfworkspace-order-controls .btn { padding: .2rem .35rem; line-height: 1.3; }
+#id_existingdocuments .pdfworkspace-order-controls .pdfworkspace-drag { cursor: grab; }
+#id_existingdocuments .pdfworkspace-document-dragging { opacity: .55; }
+#id_existingdocuments .pdfworkspace-document-removing .pdfworkspace-document-filename {
+    text-decoration: line-through;
+    opacity: .6;
+}
+#id_existingdocuments .pdfworkspace-order-labels:not(:empty) { font-size: .85rem; }
+@media (max-width: 575px) {
+    #id_existingdocuments .pdfworkspace-document-columns,
+    #id_existingdocuments .pdfworkspace-document-row {
+        grid-template-columns: 1.5rem minmax(4rem, 1fr) 5rem 6.5rem;
+        gap: .3rem;
+    }
+}
+.path-mod-pdfworkspace #id_existingdocuments .fitem:has(input[id^="id_locked_document_"]),
+.path-mod-pdfworkspace #id_existingdocuments .fitem:has(input[id^="id_removedocument_"]) {
+    margin-bottom: .4rem;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .form-check:has(input[id^="id_locked_document_"]),
+.path-mod-pdfworkspace #id_existingdocuments .form-check:has(input[id^="id_removedocument_"]) {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 2rem;
+    padding-left: 0;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .form-check input[type="checkbox"] {
+    position: static;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .form-check label {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-width: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .form-check input:disabled + label {
+    cursor: not-allowed;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .pdfworkspace-document-filename {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments .pdfworkspace-document-remove-icon {
+    flex: 0 0 1rem;
+    width: 1rem;
+    color: #403852;
+    font-size: .9rem;
+    text-align: center;
+}
+
+.path-mod-pdfworkspace #id_existingdocuments input:disabled + label .pdfworkspace-document-remove-icon {
+    color: #aaa6b2;
+}

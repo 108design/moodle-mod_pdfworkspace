@@ -1,0 +1,12 @@
+{{!
+ PDF Workspace template.
+ @copyright 2026 Andreas Giesen <andreas@108design.com>
+ @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+<div class="pdfworkspace-overview-actions" role="group" aria-label="{{# str }} overviewactioncolumn, pdfworkspace {{/ str }}">
+    {{#actions}}
+        <a href="{{{url}}}" class="pdfworkspace-overview-action {{buttonclass}}" aria-label="{{label}}" title="{{label}}">
+            <i class="{{iconclass}}" aria-hidden="true"></i>
+        </a>
+    {{/actions}}
+</div>
