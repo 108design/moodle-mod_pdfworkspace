@@ -1,8 +1,75 @@
-# PDF Workspace for Moodle
+<p align="center">
+  <img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/branding/logo.svg" alt="PDF Workspace logo" width="125" height="125">
+</p>
+
+# PDF Workspace
 
 Read, annotate and discuss PDFs within a Moodle course activity. Teachers can
 bring several documents together in one workspace, and participants can add
 markings and comments with the audiences allowed by the activity settings.
+
+## Screenshots
+
+<details>
+<summary>View screenshots (10)</summary>
+
+Click a preview to open the full-size screenshot.
+
+<table>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-marker.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-marker.jpg" width="241" height="160" alt="PDF tabs, annotation tools and highlighting"></a><br>
+<sub>PDF tabs, annotation tools and highlighting</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment.jpg" width="276" height="160" alt="Add a comment to a PDF marking"></a><br>
+<sub>Add a comment to a PDF marking</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg" width="278" height="160" alt="Choose the audience for a new comment"></a><br>
+<sub>Choose the audience for a new comment</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-reply.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-reply.jpg" width="300" height="145" alt="Reply within a comment thread"></a><br>
+<sub>Reply within a comment thread</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview.jpg" width="300" height="138" alt="Overview of questions, answers and reports"></a><br>
+<sub>Overview of questions, answers and reports</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg" width="300" height="144" alt="Select workspace documents and download order"></a><br>
+<sub>Select workspace documents and download order</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-download-options.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-download-options.jpg" width="230" height="160" alt="Current PDF and workspace download options"></a><br>
+<sub>Current PDF and workspace download options</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new1.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new1.jpg" width="277" height="160" alt="Upload PDFs and configure permitted audiences"></a><br>
+<sub>Upload PDFs and configure permitted audiences</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new2.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new2.jpg" width="300" height="122" alt="Configure annotation tools and participant downloads"></a><br>
+<sub>Configure annotation tools and participant downloads</sub>
+</td>
+<td align="center" width="50%" valign="middle">
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-settings.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-settings.jpg" width="300" height="148" alt="Site administration and combined-export settings"></a><br>
+<sub>Site administration and combined-export settings</sub>
+</td>
+</tr>
+</table>
+
+</details>
+
 
 ## Features
 
@@ -12,8 +79,7 @@ markings and comments with the audiences allowed by the activity settings.
 - An overview of questions, answers, your own posts and reports.
 - Downloads of original PDFs, comments, annotated PDFs and selected workspace documents.
 
-The plugin targets Moodle 4.5 and later; check your required workflows with your
-Moodle version and theme before production use.
+Supports Moodle 4.5, 5.0, 5.1 and 5.2.
 
 ## Installation
 
@@ -70,6 +136,14 @@ and comments-only downloads work without Python.
 See [server setup in English](export/README.md) or
 [Servereinrichtung auf Deutsch](export/README.de.md) for the complete instructions.
 
+## Privacy
+
+PDFs, markings, comment content and attachments are stored within Moodle,
+with author and selected-recipient references, subscriptions, votes and reports.
+The plugin supports Moodle Privacy API export and erasure. Combined downloads
+are generated locally on the Moodle server and apply the requesting user's
+visibility permissions.
+
 ## Maintainer and origin
 
 PDF Workspace is an independently maintained derivative of RWTH Aachen's PDF
@@ -79,7 +153,9 @@ Maintained by Andreas Giesen.
 
 ## License
 
-GNU General Public License version 3 or later. See [LICENSE.md](LICENSE.md) for the full terms.
+**Available free of charge under the terms of the applicable license.**
+
+GNU General Public License version 3 or later. See [LICENSE.md](https://github.com/108design/moodle-mod_pdfworkspace/blob/main/LICENSE.md) for the full terms.
 Bundled third-party code retains its original licences: MIT for pdf-annotate.js,
 text-clipper and jsPDF; Apache 2.0 for PDF.js and its supporting assets.
 See [thirdpartylibs.xml](thirdpartylibs.xml) and the bundled licence files for details.

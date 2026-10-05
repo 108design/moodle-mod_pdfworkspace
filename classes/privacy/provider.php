@@ -564,6 +564,10 @@ class provider implements
             return;
         }
 
+        if (!$userlist->get_userids()) {
+            return;
+        }
+
         list($userinsql, $userinparams) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
 
         // Find the instance.
@@ -580,22 +584,20 @@ class provider implements
         // Delete subscriptions.
         $annotations = $DB->get_records('pdfworkspace_annotations', ['pdfworkspaceid' => $annotatorid]);
         $annotationids = array_column($annotations, 'id');
-        list($subinsql, $subinparams) = $DB->get_in_or_equal($annotationids, SQL_PARAMS_NAMED);
-
-        $DB->execute("DELETE FROM {pdfworkspace_subscriptions} sub
-                            WHERE sub.userid {$userinsql}
-                            AND sub.annotationid {$subinsql}",
-                            array_merge($userinparams, $subinparams));
+        if ($annotationids) {
+            list($subinsql, $subinparams) = $DB->get_in_or_equal($annotationids, SQL_PARAMS_NAMED, 'annotation');
+            $DB->delete_records_select('pdfworkspace_subscriptions',
+                "userid {$userinsql} AND annotationid {$subinsql}", array_merge($userinparams, $subinparams));
+        }
 
         // Delete votes.
         $comments = $DB->get_records('pdfworkspace_comments', ['pdfworkspaceid' => $annotatorid]);
         $commentsids = array_column($comments, 'id');
-        list($commentinsql, $commentinparams) = $DB->get_in_or_equal($commentsids, SQL_PARAMS_NAMED);
-
-        $DB->execute("DELETE FROM {pdfworkspace_votes} votes
-                        WHERE vote.userid {$userinsql}
-                        AND vote.commentid {$commentinsql}",
-                        array_merge($userinparams, $commentinparams));
+        if ($commentsids) {
+            list($commentinsql, $commentinparams) = $DB->get_in_or_equal($commentsids, SQL_PARAMS_NAMED, 'comment');
+            $DB->delete_records_select('pdfworkspace_votes',
+                "userid {$userinsql} AND commentid {$commentinsql}", array_merge($userinparams, $commentinparams));
+        }
 
         // Delete rest of data.
         $DB->delete_records_select('pdfworkspace_annotations', $sql, $params);
@@ -603,11 +605,11 @@ class provider implements
         $DB->delete_records_select('pdfworkspace_comments', $sql, $params);
 
         // Delete pictures in comments.
-        $DB->execute("DELETE FROM {files} imgs
-                        WHERE imgs.component = 'mod_pdfworkspace'
-                        AND imgs.filearea = 'post'
-                        AND imgs.userid {$userinsql}
-                        AND imgs.itemid {$commentinsql}",
-                        array_merge($userinparams, $commentinparams));
+        $files = get_file_storage()->get_area_files($context->id, 'mod_pdfworkspace', 'post', false, 'id', false);
+        foreach ($files as $file) {
+            if (in_array($file->get_userid(), $userlist->get_userids()) && in_array($file->get_itemid(), $commentsids)) {
+                $file->delete();
+            }
+        }
     }
 }

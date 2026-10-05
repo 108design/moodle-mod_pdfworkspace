@@ -25,6 +25,7 @@
 namespace mod_pdfworkspace;
 
 defined('MOODLE_INTERNAL') || die();
+global $CFG;
 
 require_once($CFG->dirroot . '/mod/pdfworkspace/model/pdfworkspace.php');
 

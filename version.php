@@ -26,7 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_pdfworkspace';
-$plugin->version   = 2026100205;
-$plugin->release  = 'PDF Workspace v1.5.9 (108design development)';
+$plugin->version   = 2026100500;
+$plugin->release   = '1.5.10';
 $plugin->requires  = 2021051700;
 $plugin->maturity  = MATURITY_STABLE;
+$plugin->supported = [405, 502];

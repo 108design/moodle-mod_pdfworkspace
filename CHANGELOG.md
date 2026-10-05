@@ -1,3 +1,10 @@
+## 2026100500 v1.5.10
+
+* Correct activity-scoped privacy deletion of subscriptions, votes and comment attachments across supported databases.
+* Add native Moodle compatibility regression tests.
+* Document Moodle 4.5–5.2 compatibility and server prerequisites for combined downloads.
+* Add the product logo, screenshot gallery and concise licence notice.
+
 ## 2025070803 v1.5.9
 * fix images not being displayed in comments
 * remove explicit mathjax calls for rendering
