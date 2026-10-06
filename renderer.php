@@ -106,7 +106,9 @@ class mod_pdfworkspace_renderer extends plugin_renderer_base {
         $taburl = new moodle_url($baseurl, array('action' => $action));
         $tabname = get_string($namekey, 'pdfworkspace', $nameargs);
         if ($pdfworkspacename) {
-            strlen($pdfworkspacename) > 20 ? $tabname = substr($pdfworkspacename, 0, 21) . "..." : $tabname = $pdfworkspacename;
+            // Activity filters may add links. Never truncate their HTML inside a tab link.
+            $plainname = html_entity_decode(strip_tags($pdfworkspacename), ENT_QUOTES, 'UTF-8');
+            $tabname = s(core_text::strlen($plainname) > 20 ? core_text::substr($plainname, 0, 21) . '...' : $plainname);
         }
         $id = $action;
         $tab = new tabobject($id, $taburl, $tabname);
@@ -123,16 +125,13 @@ class mod_pdfworkspace_renderer extends plugin_renderer_base {
      * @return type
      */
     public function pdfworkspace_render_tabs(moodle_url $baseurl, $pdfworkspacename, $context, $selected = null, $inactive = null) {
-        global $DB, $USER;
-
         $overviewtab = $this->pdfworkspace_create_tab($baseurl, 'overview', 'overview');
 
         $level1 = array(
             $overviewtab,
             $this->pdfworkspace_create_tab($baseurl, 'view', 'document', $pdfworkspacename),
         );
-        $cm = get_coursemodule_from_id('pdfworkspace', $context->instanceid, 0, false, MUST_EXIST);
-        if (\mod_pdfworkspace\visibility::is_staff($context, $USER->id)) {
+        if (is_siteadmin()) {
             $level1[] = $this->pdfworkspace_create_tab($baseurl, 'statistic', 'statistic');
         }
         return $this->tabtree($level1, $selected, $inactive);

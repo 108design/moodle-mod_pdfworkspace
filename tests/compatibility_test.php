@@ -71,6 +71,27 @@ final class compatibility_test extends \advanced_testcase {
             $this->assertIsString($output);
             $this->assertNotSame('', $output);
         }
+        pdfworkspace_require_statistics_access($context);
+        $tabs = $renderer->pdfworkspace_render_tabs($url,
+            '<a class="autolink" href="https://www.example.com/">PDF Workspace Demo</a>', $context, 'view');
+        $this->assertStringNotContainsString('autolink', $tabs);
+        $this->assertStringContainsString('PDF Workspace Demo', $tabs);
+        $this->assertStringContainsString('action=statistic',
+            $renderer->pdfworkspace_render_tabs($url, $activity->name, $context));
+        foreach (['student', 'teacher', 'editingteacher', 'manager'] as $archetype) {
+            $user = $this->getDataGenerator()->create_user();
+            $role = $DB->get_field('role', 'id', ['shortname' => $archetype], MUST_EXIST);
+            $this->getDataGenerator()->enrol_user($user->id, $course->id, $role);
+            $this->setUser($user);
+            $this->assertStringNotContainsString('action=statistic',
+                $renderer->pdfworkspace_render_tabs($url, $activity->name, $context));
+            try {
+                pdfworkspace_require_statistics_access($context);
+                $this->fail('Statistics must reject non-admin roles, including managers');
+            } catch (\required_capability_exception $exception) {
+                $this->assertSame('nopermissions', $exception->errorcode);
+            }
+        }
     }
 
     /** Fresh installation and the workspace-selection upgrade must produce the declared schema. */

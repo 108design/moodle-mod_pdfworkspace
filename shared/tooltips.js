@@ -70,6 +70,11 @@
                         trigger: 'manual',
                         html: false,
                         animation: false,
+                        template: node.classList.contains('pdfworkspace-overview-preview') ?
+                            '<div class="tooltip pdfworkspace-preview-tooltip" role="tooltip">' +
+                            '<div class="tooltip-arrow arrow"></div><div class="tooltip-inner"></div></div>' :
+                            '<div class="tooltip" role="tooltip"><div class="tooltip-arrow arrow"></div>' +
+                            '<div class="tooltip-inner"></div></div>',
                     }),
                 };
                 owned.set(node, entry);

@@ -32,13 +32,18 @@ require_once($CFG->dirroot . '/mod/pdfworkspace/model/comment.class.php');
 
 class multi_document_test extends \advanced_testcase {
     public function test_annotations_and_questions_stay_on_their_pdf(): void {
-        global $DB, $USER;
+        global $DB, $USER, $CFG, $PAGE;
 
         $this->resetAfterTest();
         $this->setAdminUser();
         $course = $this->getDataGenerator()->create_course();
         $activity = $this->getDataGenerator()->create_module('pdfworkspace', ['course' => $course->id]);
         $context = \context_module::instance($activity->cmid);
+        $PAGE->set_course($course);
+        $cm = get_coursemodule_from_id('pdfworkspace', $activity->cmid);
+        $PAGE->set_cm($cm, $course);
+        $PAGE->set_context($context);
+        $PAGE->set_url(new \moodle_url('/mod/pdfworkspace/view.php', ['id' => $cm->id]));
         $storage = get_file_storage();
         foreach (['first.pdf', 'second.pdf'] as $name) {
             $storage->create_file_from_string([
@@ -64,7 +69,7 @@ class multi_document_test extends \advanced_testcase {
                 'audience' => 'public',
                 'timecreated' => time(),
             ]);
-            $DB->insert_record('pdfworkspace_comments', (object)[
+            $questionid = $DB->insert_record('pdfworkspace_comments', (object)[
                 'pdfworkspaceid' => $activity->id,
                 'annotationid' => $annotationid,
                 'userid' => $USER->id,
@@ -74,6 +79,16 @@ class multi_document_test extends \advanced_testcase {
                 'visibility' => 'public',
                 'isquestion' => 1,
             ]);
+            $answerid = $DB->insert_record('pdfworkspace_comments', (object)[
+                'pdfworkspaceid' => $activity->id, 'annotationid' => $annotationid,
+                'userid' => $USER->id, 'content' => 'Reply for ' . $document->filename,
+                'timecreated' => time() + 1, 'timemodified' => time() + 1,
+                'visibility' => 'public', 'isquestion' => 0,
+            ]);
+            $DB->insert_record('pdfworkspace_reports', (object)[
+                'pdfworkspaceid' => $activity->id, 'courseid' => $course->id, 'commentid' => $answerid,
+                'userid' => $USER->id, 'message' => 'Synthetic report', 'timecreated' => time(),
+            ]);
         }
         foreach ($documents as $document) {
             $questions = \pdfworkspace_comment::get_questions($activity->id, 1, $context, $document->id);
@@ -82,5 +97,56 @@ class multi_document_test extends \advanced_testcase {
         }
         $this->assertSame($documents[0]->filename,
             pdfworkspace_validate_draft_documents($activity->id, $context->id, []));
+
+        // Render every populated overview; test actual href values, not just URL strings.
+        require_once($CFG->dirroot . '/mod/pdfworkspace/model/overviewtable.php');
+        $url = new \moodle_url('/mod/pdfworkspace/view.php', ['id' => $cm->id, 'action' => 'overview']);
+        $questions = pdfworkspace_get_questions($activity->id, $context, 2);
+        $answers = pdfworkspace_get_answers_for_this_user($activity->id, $context, 0);
+        $posts = pdfworkspace_get_posts_by_this_user($activity->id, $context);
+        $reports = pdfworkspace_get_reports($activity->id, $context, 2);
+        $this->assertCount(2, $questions);
+        $this->assertCount(2, $answers);
+        $this->assertCount(4, $posts);
+        $this->assertCount(2, $reports);
+        $rows = [
+            [new \questionstable($url, false, true), $questions,
+                fn($table, $row) => pdfworkspace_questionstable_add_row($course->id, $table, $row, [], false)],
+            [new \answerstable($url), $answers,
+                fn($table, $row) => pdfworkspace_answerstable_add_row($course->id, $table, $row, $cm->id, 0, 5, 0, $context)],
+            [new \userspoststable($url, true), $posts,
+                fn($table, $row) => pdfworkspace_userspoststable_add_row($table, $row)],
+            [new \reportstable($url), $reports,
+                fn($table, $row) => pdfworkspace_reportstable_add_row($course->id, $table, $row, $cm->id, 5, 2, 0, $context)],
+        ];
+        foreach ($rows as [$table, $entries, $render]) {
+            $table->setup();
+            ob_start();
+            foreach ($entries as $entry) {
+                $render($table, $entry);
+            }
+            $table->finish_html();
+            $html = ob_get_clean();
+            $this->assertStringNotContainsString('&amp;amp;', $html);
+            $dom = new \DOMDocument();
+            $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($dom);
+            $links = $xpath->query('//tbody//a[contains(@href, "annoid=")]');
+            $this->assertGreaterThan(0, $links->length);
+            $this->assertStringContainsString('pdfworkspace-col-document',
+                $xpath->query('//thead//th')->item(0)->getAttribute('class'));
+            foreach ($links as $link) {
+                parse_str(parse_url($link->getAttribute('href'), PHP_URL_QUERY), $params);
+                $comment = $DB->get_record('pdfworkspace_comments', ['id' => $params['commid']], '*', MUST_EXIST);
+                $annotation = $DB->get_record('pdfworkspace_annotations', ['id' => $params['annoid']], '*', MUST_EXIST);
+                $this->assertEquals($annotation->id, $comment->annotationid);
+                $this->assertEquals($annotation->documentid, $params['doc']);
+                $this->assertEquals($annotation->page, $params['page']);
+                $this->assertEquals($cm->id, $params['id']);
+            }
+        }
+        $preview = pdfworkspace_overview_preview('<p>Quotes &quot; &amp; <strong>bold</strong></p>', $url);
+        $this->assertStringNotContainsString('<strong>', $preview);
+        $this->assertStringContainsString('title="Quotes &quot; &amp; BOLD"', $preview);
     }
 }

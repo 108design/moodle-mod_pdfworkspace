@@ -2264,7 +2264,7 @@ async function startIndex(
                                         if (data.comments.length === 1 && !data.comments[0].isquestion) {
                                             $('.comment-list-container').append(html);
                                         } else {
-                                            templates.replaceNodeContents('.comment-list-container', html, js);
+                                            return templates.replaceNodeContents('.comment-list-container', html, js);
                                         }
                                     })
                                     .then(function () {
@@ -2291,13 +2291,13 @@ async function startIndex(
                                         //if the target has the attribute markCommentid a specific comment should be marked with an red border.
                                         //after 3 sec the border should disappear.
                                         if (markCommentid !== undefined && markCommentid !== null) {
-                                            $('#comment_' + markCommentid).addClass('mark');
-                                            markCommentid = undefined;
+                                            const selectedComment = document.getElementById('comment_' + markCommentid);
+                                            if (selectedComment) {
+                                                selectedComment.classList.add('mark');
+                                                selectedComment.scrollIntoView({block: 'nearest'});
+                                            }
                                             setTimeout(function () {
-                                                if (document.querySelector('#comment_' + markCommentid)) {
-                                                    document.querySelector('#comment_' + markCommentid).style.border =
-                                                        'none';
-                                                }
+                                                selectedComment?.classList.remove('mark');
                                             }, 3000);
                                         }
                                     })
@@ -10267,6 +10267,7 @@ async function startIndex(
                                 function pickAnnotation(page, annoid, commid) {
                                     //[0] for only first element (it only can be one element)
                                     var target = $('[data-pdf-annotate-id=' + annoid + ']')[0];
+                                    if (!target) { return; }
                                     if (commid !== null) {
                                         target.markCommentid = commid;
                                     }
@@ -10274,11 +10275,16 @@ async function startIndex(
 
                                     //Scroll to defined page (because of the picked annotation (new annotation, new answer or report) from overview)
                                     var targetDiv = $('[data-target-id=' + annoid + ']')[0];
-                                    var pageOffset = document.getElementById('pageContainer' + page).offsetTop;
-
-                                    var contentWrapper = $('#content-wrapper');
-                                    contentWrapper.scrollTop(pageOffset + targetDiv.offsetTop - 100);
-                                    contentWrapper.scrollLeft(targetDiv.offsetLeft - contentWrapper.width() + 100);
+                                    if (!targetDiv) { targetDiv = target; }
+                                    const contentWrapper = document.getElementById('content-wrapper');
+                                    const markerBounds = targetDiv.getBoundingClientRect();
+                                    const viewerBounds = contentWrapper.getBoundingClientRect();
+                                    contentWrapper.scrollTop += markerBounds.top - viewerBounds.top - 100;
+                                    if (markerBounds.left < viewerBounds.left) {
+                                        contentWrapper.scrollLeft += markerBounds.left - viewerBounds.left - 100;
+                                    } else if (markerBounds.right > viewerBounds.right) {
+                                        contentWrapper.scrollLeft += markerBounds.right - viewerBounds.right + 100;
+                                    }
                                 }
                             },
                             /* 38 */ /*OWN Module! To show questions of one PDF-Page on the right side*/

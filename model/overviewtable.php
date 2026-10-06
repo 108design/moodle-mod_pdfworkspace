@@ -61,6 +61,20 @@ class overviewtable extends flexible_table {
         return "<span class='text'>$string</span>";
     }
 
+    /** Accessible compact header, also usable by Moodle's sort controls. */
+    public static function icon_header($icon, $label) {
+        return html_writer::tag('span', html_writer::tag('i', '',
+            ['class' => 'fa fa-' . $icon, 'aria-hidden' => 'true']) .
+            html_writer::tag('span', s($label), ['class' => 'sr-only visually-hidden']), ['title' => $label]);
+    }
+
+    /** Keep Moodle's accessible sort label plain when the visible heading is an icon. */
+    protected function sort_link($text, $column, $isprimary, $order) {
+        $label = trim(strip_tags($text));
+        $link = parent::sort_link($label, $column, $isprimary, $order);
+        return str_replace('>' . $label . '</a>', '>' . $text . '</a>', $link);
+    }
+
 }
 /**
  * Table with all questions that are yet (marked as) unsolved.
@@ -71,42 +85,31 @@ class questionstable extends overviewtable {
 
     public function __construct($url, $showdropdown, $usevotes) {
         parent::__construct($this->id);
-        global $OUTPUT;
-        // $this->collapsible(true); // Concerns the tables columns.
         $this->define_baseurl($url);
-        $columns = ['col0', 'col1'];
+        $columns = ['col5', 'col0', 'col1'];
         if ($usevotes) {
             $columns[] = 'col2';
         }
-        array_push($columns, 'col3', 'col5');
+        array_push($columns, 'col3', 'col4');
         if ($showdropdown) {
-            $columns[] = 'col6'; // Action dropdown menu.
+            $columns[] = 'col6';
             $this->no_sorting('col6');
         }
         $this->define_columns($columns);
         $this->attributes['id'] = $this->id;
-        $this->attributes['class'] = 'generaltable flexible table table-striped table-hover pdfworkspace-overview-table pdfworkspace-questions-table' .
+        $this->attributes['class'] = 'generaltable flexible table table-sm table-hover pdfworkspace-overview-table pdfworkspace-questions-table' .
             ($usevotes ? ' pdfworkspace-has-votes' : '') . ($showdropdown ? ' pdfworkspace-has-actions' : '');
         $question = get_string('question', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/unlock', '') . self::wrap(get_string('question', 'pdfworkspace'));
-        $whoasked = get_string('by', 'pdfworkspace') . ' ' . get_string('on', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/user', '') . self::wrap(get_string('by', 'pdfworkspace')) . ' ' .
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('on', 'pdfworkspace'));
-        $votes = get_string('votes', 'pdfworkspace');
-        // "<i class='icon fa fa-chevron-up fa-lg' style='float:left'></i>" . self::wrap(get_string('votes', 'pdfworkspace')) .
-        // ' ' . $OUTPUT->help_icon('voteshelpicon', 'pdfworkspace');
-        $answers = get_string('answers', 'pdfworkspace');
-        // $OUTPUT->pix_icon('t/message', '') . ' ' . self::wrap(get_string('answers', 'pdfworkspace'));
+        $votes = self::icon_header('thumbs-up', get_string('votes', 'pdfworkspace'));
+        $answers = self::icon_header('comments', get_string('answers', 'pdfworkspace'));
         $lastanswered = get_string('lastanswered', 'pdfworkspace');
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('lastanswered', 'pdfworkspace'));
         $document = get_string('pdfworkspacecolumn', 'pdfworkspace');
-        // "<i class='icon fa fa-book fa-fw'></i>" . self::wrap(get_string('pdfworkspacecolumn', 'pdfworkspace'));
 
-        $headers = [$question, get_string('author', 'pdfworkspace')];
+        $headers = [$document, $question, get_string('author', 'pdfworkspace')];
         if ($usevotes) {
             $headers[] = $votes;
         }
-        array_push($headers, $answers, $document);
+        array_push($headers, $answers, $lastanswered);
         if ($showdropdown) {
             $actionmenu = get_string('overviewactioncolumn', 'pdfworkspace');
             $headers[] = $actionmenu;
@@ -117,6 +120,14 @@ class questionstable extends overviewtable {
         $this->no_sorting('col1');
         $this->sortable(true, 'col5', SORT_ASC);
         $this->sortable(true, 'col3', SORT_ASC);
+        $this->column_class('col5', 'pdfworkspace-col-document');
+        $this->column_class('col0', 'pdfworkspace-col-content');
+        $this->column_class('col1', 'pdfworkspace-col-person');
+        $this->column_class('col2', 'pdfworkspace-col-count');
+        $this->column_class('col3', 'pdfworkspace-col-count');
+        $this->column_class('col4', 'pdfworkspace-col-person');
+        $this->column_class('col6', 'pdfworkspace-col-actions');
+        $this->no_sorting('col4');
         if ($usevotes) {
             $this->sortable(true, 'col2', SORT_DESC);
         }
@@ -133,31 +144,26 @@ class answerstable extends overviewtable {
 
     public function __construct($url) {
         parent::__construct($this->id);
-        global $OUTPUT;
-        // $this->collapsible(true); // Concerns the tables columns.
         $this->define_baseurl($url);
-        $this->define_columns(array('col3', 'col0', 'col4', 'col5'));
+        $this->define_columns(array('col4', 'col3', 'col0', 'col2', 'col5'));
         $this->attributes['id'] = $this->id;
-        $this->attributes['class'] = 'generaltable flexible table table-striped table-hover ' .
+        $this->attributes['class'] = 'generaltable flexible table table-sm table-hover ' .
             'pdfworkspace-overview-table pdfworkspace-answers-table pdfworkspace-has-actions';
         $answer = get_string('answer', 'pdfworkspace');
-        // $OUTPUT->pix_icon('t/message', '') . self::wrap(get_string('answer', 'pdfworkspace'));
-        $iscorrect = get_string('correct', 'pdfworkspace');
-        // . get_string('correct', 'pdfworkspace');
-        $whoanswered = get_string('by', 'pdfworkspace') . ' ' . get_string('on', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/user', '') . self::wrap(get_string('by', 'pdfworkspace')) . ' ' .
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('on', 'pdfworkspace'));
-        $question = get_string('myquestion', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/email', '') . self::wrap(get_string('myquestion', 'pdfworkspace'));
+        $question = get_string('question', 'pdfworkspace');
         $document = get_string('pdfworkspacecolumn', 'pdfworkspace');
-        // "<i class='icon fa fa-book fa-fw'></i>" . self::wrap(get_string('pdfworkspacecolumn', 'pdfworkspace'));
         $actionmenu = get_string('overviewactioncolumn', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/settings', '') . self::wrap(get_string('overviewactioncolumn', 'pdfworkspace'));
-        $this->define_headers(array($question, $answer, $document, $actionmenu));
+        $this->define_headers(array($document, $question, $answer, get_string('author', 'pdfworkspace'), $actionmenu));
         $this->no_sorting('col0');
         $this->no_sorting('col5');
         $this->sortable(true, 'col3', SORT_ASC);
         $this->sortable(true, 'col4', SORT_DESC);
+        $this->column_class('col4', 'pdfworkspace-col-document');
+        $this->column_class('col3', 'pdfworkspace-col-content');
+        $this->column_class('col0', 'pdfworkspace-col-content');
+        $this->column_class('col2', 'pdfworkspace-col-person');
+        $this->column_class('col5', 'pdfworkspace-col-actions');
+        $this->no_sorting('col2');
     }
 }
 /**
@@ -169,24 +175,17 @@ class userspoststable extends overviewtable {
 
     public function __construct($url, $usevotes) {
         parent::__construct($this->id);
-        global $OUTPUT;
-        // $this->collapsible(true); // Concerns the tables columns.
         $this->define_baseurl($url);
-        $columns = $usevotes ? ['col0', 'col1', 'col2', 'col3'] : ['col0', 'col1', 'col3'];
+        $columns = $usevotes ? ['col3', 'col0', 'col1', 'col2'] : ['col3', 'col0', 'col1'];
         $this->define_columns($columns);
         $this->attributes['id'] = $this->id;
-        $this->attributes['class'] = 'generaltable flexible table table-striped table-hover ' .
+        $this->attributes['class'] = 'generaltable flexible table table-sm table-hover ' .
             'pdfworkspace-overview-table pdfworkspace-posts-table' . ($usevotes ? ' pdfworkspace-has-votes' : '');
         $mypost = get_string('mypost', 'pdfworkspace');
-        // $OUTPUT->pix_icon('t/message', '') . self::wrap(get_string('mypost', 'pdfworkspace'));
         $lastedited = get_string('lastedited', 'pdfworkspace');
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('lastedited', 'pdfworkspace'));
-        $votes = get_string('votes', 'pdfworkspace');
-        // "<i class='icon fa fa-chevron-up fa-lg' style='float:left'></i>" . self::wrap(get_string('votes', 'pdfworkspace')). ' ' .
-        // $OUTPUT->help_icon('voteshelpicon', 'pdfworkspace');
+        $votes = self::icon_header('thumbs-up', get_string('votes', 'pdfworkspace'));
         $document = get_string('pdfworkspacecolumn', 'pdfworkspace');
-        // "<i class='icon fa fa-book fa-fw'></i>" . self::wrap(get_string('pdfworkspacecolumn', 'pdfworkspace'));
-        $headers = $usevotes ? [$mypost, $lastedited, $votes, $document] : [$mypost, $lastedited, $document];
+        $headers = $usevotes ? [$document, $mypost, $lastedited, $votes] : [$document, $mypost, $lastedited];
         $this->define_headers($headers);
         $this->no_sorting('col0');
         if ($usevotes) {
@@ -194,6 +193,10 @@ class userspoststable extends overviewtable {
         }
         $this->sortable(true, 'col3', SORT_DESC);
         $this->sortable(true, 'col1', SORT_DESC);
+        $this->column_class('col3', 'pdfworkspace-col-document');
+        $this->column_class('col0', 'pdfworkspace-col-content');
+        $this->column_class('col1', 'pdfworkspace-col-person');
+        $this->column_class('col2', 'pdfworkspace-col-count');
     }
 }
 /**
@@ -205,29 +208,27 @@ class reportstable extends overviewtable {
 
     public function __construct($url) {
         parent::__construct($this->id);
-        global $OUTPUT;
         $this->define_baseurl($url);
-        $this->define_columns(array('col0', 'col2', 'col3', 'col4'));
+        $this->define_columns(array('col3', 'col0', 'col1', 'col2', 'col5', 'col4'));
         $this->attributes['id'] = $this->id;
-        $this->attributes['class'] = 'generaltable flexible table table-striped table-hover ' .
+        $this->attributes['class'] = 'generaltable flexible table table-sm table-hover ' .
             'pdfworkspace-overview-table pdfworkspace-reports-table pdfworkspace-has-actions';
-        $report = get_string('report', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/email', '') . self::wrap(get_string('report', 'pdfworkspace'));
-        $reportedby = get_string('by', 'pdfworkspace'). ' '. get_string('on', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/user', '') . self::wrap(get_string('by', 'pdfworkspace')) . ' ' .
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('on', 'pdfworkspace'));
+        $report = get_string('overviewreport', 'pdfworkspace');
         $reportedcomment = get_string('reportedcomment', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/flagged', '') . self::wrap(get_string('reportedcomment', 'pdfworkspace'));
-        $writtenby = get_string('by', 'pdfworkspace') . ' ' . get_string('on', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/user', '') . self::wrap(get_string('by', 'pdfworkspace')) . ' ' .
-        // $OUTPUT->pix_icon('e/insert_time', '') . self::wrap(get_string('on', 'pdfworkspace'));
         $actionmenu = get_string('overviewactioncolumn', 'pdfworkspace');
-        // $OUTPUT->pix_icon('i/settings', '') . self::wrap(get_string('overviewactioncolumn', 'pdfworkspace'));
-        $this->define_headers(array($report, $reportedcomment,
-            get_string('pdfworkspacecolumn', 'pdfworkspace'), $actionmenu));
+        $this->define_headers(array(get_string('pdfworkspacecolumn', 'pdfworkspace'), $report,
+            get_string('overviewreporter', 'pdfworkspace'), $reportedcomment, get_string('author', 'pdfworkspace'), $actionmenu));
         $this->no_sorting('col0');
         $this->no_sorting('col2');
         $this->no_sorting('col3');
         $this->no_sorting('col4');
+        $this->no_sorting('col1');
+        $this->no_sorting('col5');
+        $this->column_class('col3', 'pdfworkspace-col-document');
+        $this->column_class('col0', 'pdfworkspace-col-content');
+        $this->column_class('col1', 'pdfworkspace-col-person');
+        $this->column_class('col2', 'pdfworkspace-col-content');
+        $this->column_class('col5', 'pdfworkspace-col-person');
+        $this->column_class('col4', 'pdfworkspace-col-actions');
     }
 }

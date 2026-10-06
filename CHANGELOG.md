@@ -1,3 +1,10 @@
+## 2026100601 v1.6.0
+
+* Make overview tables compact, with documents first and two-line comment previews.
+* Show full preview text on hover or keyboard focus.
+* Open the correct PDF, page, marking and comment from overview links.
+* Improve scrolling to markings and refresh the screenshot gallery.
+
 ## 2026100500 v1.5.10
 
 * Correct activity-scoped privacy deletion of subscriptions, votes and comment attachments across supported databases.

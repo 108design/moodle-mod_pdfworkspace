@@ -80,7 +80,7 @@ function pdfworkspace_display_embed($pdfworkspace, $cm, $course, $file, $page = 
     $PAGE->requires->strings_for_js(array_keys($strings), 'pdfworkspace');
     // Load and execute the javascript files.
     $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/textclipper.js"));
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/index.js?ver=00075"));
+    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/index.js?ver=00077"));
     $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/locallib.js?ver=00009"));
 
     // Pass parameters from PHP to JavaScript.
@@ -1295,13 +1295,42 @@ function pdfworkspace_valid_document_filter($activityid, $contextid, $requested)
     return $requested;
 }
 
-/** Short PDF and page label for a row in this activity. */
-function pdfworkspace_overview_document_name($activityid, $contextid, $documentid, $page) {
+/** Plain PDF title for sorting and display. */
+function pdfworkspace_overview_document_title($activityid, $contextid, $documentid) {
     $documents = pdfworkspace_get_documents($activityid, $contextid);
     $document = $documents[$documentid] ?? null;
-    $name = $document ? (!empty($document->displayname) ? $document->displayname : $document->filename) : '';
-    return s($name) . html_writer::tag('small', get_string('page') . ' ' . (int)$page,
-        ['class' => 'pdfworkspace-overview-page']);
+    return $document ? (!empty($document->displayname) ? $document->displayname : $document->filename) : '';
+}
+
+/** Short PDF and page label for a row in this activity. */
+function pdfworkspace_overview_document_name($activityid, $contextid, $documentid, $page, $url = null) {
+    $name = pdfworkspace_overview_document_title($activityid, $contextid, $documentid);
+    $label = html_writer::tag('span', s($name), ['class' => 'pdfworkspace-overview-document', 'title' => $name]) .
+        html_writer::tag('small', get_string('page') . ' ' . (int)$page, ['class' => 'pdfworkspace-overview-page']);
+    return $url ? html_writer::link($url, $label) : $label;
+}
+
+/** Two-line plain-text preview; Bootstrap shows the full text on hover or focus. */
+function pdfworkspace_overview_preview($content, $url = null, $attributes = []) {
+    $text = trim(preg_replace('/\s+/u', ' ', html_to_text($content, 0, false)));
+    $attributes['class'] = 'pdfworkspace-overview-preview ' . ($attributes['class'] ?? '');
+    $attributes['title'] = $text;
+    return $url ? html_writer::link($url, s($text), $attributes) : html_writer::tag('span', s($text),
+        $attributes + ['tabindex' => '0']);
+}
+
+/** Compact metadata with a stable date rather than a long relative sentence. */
+function pdfworkspace_overview_person($author, $timestamp) {
+    return html_writer::tag('div', $author, ['class' => 'pdfworkspace-overview-author']) .
+        html_writer::tag('div', userdate($timestamp, '%d.%m.%y, %H:%M'), ['class' => 'pdfworkspace-overview-meta']);
+}
+
+/** Statistics are temporarily restricted to actual site administrators. */
+function pdfworkspace_require_statistics_access($context) {
+    require_capability('mod/pdfworkspace:viewstatistics', $context);
+    if (!is_siteadmin()) {
+        throw new required_capability_exception($context, 'mod/pdfworkspace:viewstatistics', 'nopermissions', '');
+    }
 }
 
 /** Labelled select using Moodle/Bootstrap form styling. */
@@ -1385,6 +1414,8 @@ function pdfworkspace_get_questions($activityid, $context, $questionfilter, $doc
         $lastanswer = pdfworkspace_get_last_answer($question->annoid, $entrycontext);
         if ($lastanswer) {
             $question->lastuser = $lastanswer->userid;
+            $question->lastanswered = $lastanswer->timecreated;
+            $question->lastanswerid = $lastanswer->id;
             $question->lastuservisibility = $lastanswer->visibility;
         } else {
             $question->lastanswered = false;
@@ -1408,8 +1439,9 @@ function pdfworkspace_get_questions($activityid, $context, $questionfilter, $doc
 
         $question->content = pdfworkspace_get_relativelink($question->content, $question->commentid, $context);
         $question->content = format_text($question->content, FORMAT_MOODLE);
+        $question->pdfworkspacename = pdfworkspace_overview_document_title($question->pdfworkspaceid, $context->id, $question->documentid);
         $question->link = (new moodle_url('/mod/pdfworkspace/view.php', array('id' => $question->cmid,
-            'page' => $question->page, 'annoid' => $question->annoid, 'commid' => $question->commentid)))->out();
+            'doc' => $question->documentid, 'page' => $question->page, 'annoid' => $question->annoid, 'commid' => $question->commentid)))->out(false);
 
         $res[] = $question;
 
@@ -1477,8 +1509,9 @@ function pdfworkspace_get_posts_by_this_user($activityid, $context, $documentfil
             }
         }
 
-        $params = array('id' => $post->cmid, 'page' => $post->page, 'annoid' => $post->annotationid, 'commid' => $post->commid);
-        $post->link = (new moodle_url('/mod/pdfworkspace/view.php', $params))->out();
+        $params = array('id' => $post->cmid, 'doc' => $post->documentid, 'page' => $post->page, 'annoid' => $post->annotationid, 'commid' => $post->commid);
+        $post->pdfworkspacename = pdfworkspace_overview_document_title($post->pdfworkspaceid, $context->id, $post->documentid);
+        $post->link = (new moodle_url('/mod/pdfworkspace/view.php', $params))->out(false);
         $post->content = pdfworkspace_get_relativelink($post->content, $post->commid, $context);
         $post->content = format_text($post->content, FORMAT_MOODLE);
     }
@@ -1563,10 +1596,11 @@ function pdfworkspace_get_answers_for_this_user($activityid, $context, $answerfi
         if (!pdfworkspace_can_see_comment($thread, $entrycontext)) {
             continue;
         }
+        $entry->pdfworkspacename = pdfworkspace_overview_document_title($entry->annotatorid, $context->id, $entry->documentid);
         $entry->link = (new moodle_url('/mod/pdfworkspace/view.php',
-            array('id' => $entry->cmid, 'page' => $entry->page, 'annoid' => $entry->annoid, 'commid' => $entry->answerid)))->out();
+            array('id' => $entry->cmid, 'doc' => $entry->documentid, 'page' => $entry->page, 'annoid' => $entry->annoid, 'commid' => $entry->answerid)))->out(false);
         $entry->questionlink = (new moodle_url('/mod/pdfworkspace/view.php',
-            array('id' => $entry->cmid, 'page' => $entry->page, 'annoid' => $entry->annoid, 'commid' => $entry->questionid)))->out();
+            array('id' => $entry->cmid, 'doc' => $entry->documentid, 'page' => $entry->page, 'annoid' => $entry->annoid, 'commid' => $entry->questionid)))->out(false);
 
         if ($entry->questiondeleted == 1) {
             $entry->answeredquestion = get_string('deletedComment', 'pdfworkspace');
@@ -1650,8 +1684,9 @@ function pdfworkspace_get_reports($activityid, $context, $reportfilter = 0, $doc
             unset($reports[$report->reportid]);
             continue;
         }
+        $report->pdfworkspacename = pdfworkspace_overview_document_title($report->annotatorid, $context->id, $report->documentid);
         $report->link = (new moodle_url('/mod/pdfworkspace/view.php',
-            array('id' => $report->cmid, 'page' => $report->page, 'annoid' => $report->annotationid, 'commid' => $report->commentid)))->out();
+            array('id' => $report->cmid, 'doc' => $report->documentid, 'page' => $report->page, 'annoid' => $report->annotationid, 'commid' => $report->commentid)))->out(false);
         $report->reportedcomment = pdfworkspace_get_relativelink($report->reportedcomment, $report->commentid, $reportcontext);
         $report->reportedcomment = format_text($report->reportedcomment, FORMAT_MOODLE);
         $questionid = $DB->get_record('pdfworkspace_comments', ['annotationid' => $report->annotationid, 'isquestion' => 1], 'id');
@@ -2178,18 +2213,18 @@ function pdfworkspace_questionstable_add_row($thiscourse, $table, $question, $ur
     } else {
         $author = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$question->userid&course=$thiscourse>" . pdfworkspace_get_username($question->userid) . "</a>";
     }
-    $time = userdate($question->timecreated, '%d.%m.%Y, %H:%M');
     if (!empty($question->lastanswered)) { // ! ($question->lastanswered != $question->timecreated) {
         if ($question->lastuservisibility == 'anonymous') {
             $lastresponder = get_string('anonymous', 'pdfworkspace');
         } else {
             $lastresponder = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$question->lastuser&course=$thiscourse>" . pdfworkspace_get_username($question->lastuser) . "</a>";
         }
-        $answertime = pdfworkspace_timeago($question->lastanswered);
-        $lastanswered = html_writer::tag('div', get_string('lastanswered', 'pdfworkspace'),
-            ['class' => 'pdfworkspace-overview-answer-label']) .
-            html_writer::tag('div', $lastresponder, ['class' => 'pdfworkspace-overview-answer-author']) .
-            html_writer::tag('div', $answertime, ['class' => 'pdfworkspace-overview-meta']);
+        $answertime = userdate($question->lastanswered, '%d.%m.%y, %H:%M');
+        $lasturl = new moodle_url('/mod/pdfworkspace/view.php', ['id' => $question->cmid,
+            'doc' => $question->documentid, 'page' => $question->page, 'annoid' => $question->annoid,
+            'commid' => $question->lastanswerid]);
+        $lastanswered = html_writer::tag('div', $lastresponder, ['class' => 'pdfworkspace-overview-author']) .
+            html_writer::link($lasturl, $answertime, ['class' => 'pdfworkspace-overview-meta']);
     } else {
         $lastanswered = '-';
     }
@@ -2197,21 +2232,17 @@ function pdfworkspace_questionstable_add_row($thiscourse, $table, $question, $ur
     if (isset($question->displayhidden)) {
         $classname = 'dimmed_text';
     }
-    $content = html_writer::link($question->link, $question->content, ['class' => 'more']);
-    $authorcell = html_writer::tag('div', $author, ['class' => 'pdfworkspace-overview-author']) .
-        html_writer::tag('div', $time, ['class' => 'pdfworkspace-overview-meta']);
+    $content = pdfworkspace_overview_preview($question->content, $question->link);
+    $authorcell = pdfworkspace_overview_person($author, $question->timecreated);
     $document = pdfworkspace_overview_document_name($question->pdfworkspaceid,
-        context_module::instance($question->cmid)->id, $question->documentid, $question->page);
-    $data = [$content, $authorcell];
+        context_module::instance($question->cmid)->id, $question->documentid, $question->page, $question->link);
+    $data = [$document, $content, $authorcell];
     if ($question->usevotes) {
         $data[] = $question->votes;
     }
     $answercell = html_writer::tag('div', (string)$question->answercount,
         ['class' => 'pdfworkspace-overview-answer-count']);
-    if ($lastanswered !== '-') {
-        $answercell .= $lastanswered;
-    }
-    array_push($data, $answercell, $document);
+    array_push($data, $answercell, $lastanswered);
 
     if ($showdropdown) {
         $canforward = !$question->isdeleted && pdfworkspace_forward_recipients($question,
@@ -2237,30 +2268,23 @@ function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, 
     $answer->answer = format_text($answer->answer, FORMAT_MOODLE, ['filter' => true]);
     $answer->answeredquestion = pdfworkspace_get_relativelink($answer->answeredquestion, $answer->questionid, $context);
     $answer->answeredquestion = format_text($answer->answeredquestion, FORMAT_MOODLE);
-    if (isset($answer->displayquestionhidden)) {
-        $question = "<a class='" . $answer->annoid . " more dimmed' href=$answer->questionlink>$answer->answeredquestion</a>";
-    } else {
-        $question = "<a class='" . $answer->annoid . " more' href=$answer->questionlink>$answer->answeredquestion</a>";
-    }
+    $question = pdfworkspace_overview_preview($answer->answeredquestion, $answer->questionlink,
+        ['class' => isset($answer->displayquestionhidden) ? 'dimmed' : '']);
     $document = pdfworkspace_overview_document_name($answer->annotatorid,
-        context_module::instance($answer->cmid)->id, $answer->documentid, $answer->page);
-    if ($answer->correct) {
-        $checked = "<i class='icon fa fa-check fa-fw' style='color:green;'></i>";
-    } else {
-        $checked = "";
-    }
+        context_module::instance($answer->cmid)->id, $answer->documentid, $answer->page, $answer->link);
     $answerid = 'answer_' . $answer->answerid;
-    $answerlink = "<a id=$answerid data-question=$answer->questionid href=$answer->link class='more'>$answer->answer</a>";
+    $answerlink = pdfworkspace_overview_preview($answer->answer, $answer->link,
+        ['id' => $answerid, 'data-question' => $answer->questionid]);
 
     if ($answer->visibility == 'anonymous') {
         $answeredby = get_string('anonymous', 'pdfworkspace');
     } else {
         $answeredby = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$answer->userid&course=$thiscourse>" . pdfworkspace_get_username($answer->userid) . "</a>";
     }
-    $answertime = pdfworkspace_get_user_datetime_shortformat($answer->timemodified);
-    $answerlink .= html_writer::tag('div', $answeredby, ['class' => 'pdfworkspace-overview-author']) .
-        html_writer::tag('div', $answertime . ($checked ? ' · ' . get_string('correct', 'pdfworkspace') : ''),
-            ['class' => 'pdfworkspace-overview-meta']);
+    $authorcell = pdfworkspace_overview_person($answeredby, $answer->timemodified);
+    if ($answer->correct) {
+        $authorcell .= html_writer::tag('small', get_string('correct', 'pdfworkspace'));
+    }
 
     if (empty($answer->issubscribed)) {
         $issubscribed = null;
@@ -2277,7 +2301,7 @@ function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, 
     $actions = $myrenderer->render_overview_actions(new answermenu($answer->annoid, $issubscribed,
         $cmid, $currentpage, $itemsperpage, $answerfilter));
 
-    $table->add_data(array($question, $answerlink, $document, $actions), $classname);
+    $table->add_data(array($document, $question, $answerlink, $authorcell, $actions), $classname);
 }
 
 /**
@@ -2288,20 +2312,19 @@ function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, 
  * @param object $post
  */
 function pdfworkspace_userspoststable_add_row($table, $post) {
-    $time = pdfworkspace_get_user_datetime_shortformat($post->timemodified);
-    $content = "<a href=$post->link class='more'>$post->content</a>";
+    $time = userdate($post->timemodified, '%d.%m.%y, %H:%M');
+    $content = pdfworkspace_overview_preview($post->content, $post->link);
 
     $classname = '';
     if (isset($post->displayhidden)) {
         $classname = 'dimmed_text';
     }
     $document = pdfworkspace_overview_document_name($post->pdfworkspaceid,
-        context_module::instance($post->cmid)->id, $post->documentid, $post->page);
-    $data = [$content, $time];
+        context_module::instance($post->cmid)->id, $post->documentid, $post->page, $post->link);
+    $data = [$document, $content, $time];
     if ($post->usevotes) {
         $data[] = $post->votes;
     }
-    $data[] = $document;
     $table->add_data($data, $classname);
 }
 
@@ -2326,18 +2349,13 @@ function pdfworkspace_reportstable_add_row($thiscourse, $table, $report, $cmid, 
     // Prepare report data for display.
     $reportid = 'report_' . $report->reportid;
     $document = pdfworkspace_overview_document_name($report->annotatorid, $context->id,
-        $report->documentid, $report->page);
-    $reportedcommmentlink = "<a id=$reportid href=$report->link class='more'>$report->reportedcomment</a>";
+        $report->documentid, $report->page, $report->link);
+    $reportedcommmentlink = pdfworkspace_overview_preview($report->reportedcomment, $report->link, ['id' => $reportid]);
     $writtenby = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$report->commentauthor&course=$thiscourse>" . pdfworkspace_get_username($report->commentauthor) . "</a>";
-    $commenttime = pdfworkspace_get_user_datetime_shortformat($report->commenttime);
     $reportedby = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$report->reportinguser&course=$thiscourse>" . pdfworkspace_get_username($report->reportinguser) . "</a>";
-    $reporttime = pdfworkspace_get_user_datetime_shortformat($report->timecreated);
-    $report->report = "<div class='more'>$report->report</div>" .
-        html_writer::tag('div', $reportedby, ['class' => 'pdfworkspace-overview-author']) .
-        html_writer::tag('div', $reporttime, ['class' => 'pdfworkspace-overview-meta']);
-    $reportedcommmentlink .= html_writer::tag('div', $writtenby,
-        ['class' => 'pdfworkspace-overview-author']) .
-        html_writer::tag('div', $commenttime, ['class' => 'pdfworkspace-overview-meta']);
+    $reporttext = pdfworkspace_overview_preview($report->report);
+    $reporter = pdfworkspace_overview_person($reportedby, $report->timecreated);
+    $commentauthor = pdfworkspace_overview_person($writtenby, $report->commenttime);
 
     $classname = '';
     if (!($report->cmvisible)) {
@@ -2350,7 +2368,7 @@ function pdfworkspace_reportstable_add_row($thiscourse, $table, $report, $cmid, 
         $currentpage, $itemsperpage, $reportfilter));
 
     // Add a new row to the reports table.
-    $table->add_data(array($report->report, $reportedcommmentlink, $document, $actions), $classname);
+    $table->add_data(array($document, $reporttext, $reporter, $reportedcommmentlink, $commentauthor, $actions), $classname);
 }
 
 

@@ -870,76 +870,88 @@
 .path-mod-pdfworkspace .pdfworkspace-overview-filters .btn {
     white-space: nowrap;
 }
+/* Compact thread rows: stable metadata widths, remaining space belongs to previews. */
 .path-mod-pdfworkspace .pdfworkspace-overview-table {
     width: 100%;
-    table-layout: auto;
-    border-collapse: separate;
-    border-spacing: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: .9rem;
+    line-height: 1.4;
 }
 .path-mod-pdfworkspace .pdfworkspace-overview-table :is(th, td) {
-    width: auto !important;
     min-width: 0;
     vertical-align: top;
-    padding: .75rem .65rem;
-    overflow-wrap: anywhere;
+    padding: .6rem .65rem;
+    overflow-wrap: break-word;
+    border: 0;
     border-bottom: 1px solid var(--bs-border-color, #e2dfe8);
 }
-.path-mod-pdfworkspace .pdfworkspace-overview-table :is(th, td):first-child {
-    width: 42% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):first-child {
-    width: 37% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):nth-child(2) {
-    width: 17% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):nth-child(3) {
-    width: 17% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-votes :is(th, td):nth-child(3) {
-    width: 7% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-votes :is(th, td):nth-child(4) {
-    width: 17% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table :is(th, td):last-child {
-    width: auto !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-questions-table.pdfworkspace-has-actions :is(th, td):last-child {
-    width: 5rem !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):first-child {
-    width: 32% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):nth-child(2) {
-    width: 39% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-answers-table :is(th, td):nth-child(3) {
-    width: 19% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-posts-table :is(th, td):first-child {
-    width: 56% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-posts-table :is(th, td):nth-child(2) {
-    width: 18% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-posts-table.pdfworkspace-has-votes :is(th, td):first-child {
-    width: 48% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-posts-table.pdfworkspace-has-votes :is(th, td):nth-child(3) {
-    width: 8% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):first-child,
-.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):nth-child(2) {
-    width: 35% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-reports-table :is(th, td):nth-child(3) {
-    width: 20% !important;
-}
-.path-mod-pdfworkspace .pdfworkspace-has-actions :is(th, td):last-child {
-    width: 5rem !important;
+.path-mod-pdfworkspace .pdfworkspace-overview-table th {
+    vertical-align: middle;
     white-space: nowrap;
-    overflow-wrap: normal;
+    font-size: .82rem;
+    color: var(--bs-secondary-color, #666);
+    background: var(--bs-tertiary-bg, #f7f7f9);
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-document {
+    width: 9rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table td.pdfworkspace-col-document > a {
+    display: block;
+    padding: 0;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-content {
+    width: auto;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-person {
+    width: 9.5rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-count {
+    width: 3.5rem;
+    text-align: center;
+    white-space: nowrap;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table th.pdfworkspace-col-count {
+    padding-inline: .25rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table th.pdfworkspace-col-count a {
+    display: inline-flex;
+    width: auto;
+    padding: 0;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table th.pdfworkspace-col-count .icon {
+    margin: 0;
+    font-size: .75rem;
+    width: .9rem;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-actions {
+    width: 5rem;
+    white-space: nowrap;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-overview-preview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    max-height: 2.8em;
+    margin: 0;
+}
+.path-mod-pdfworkspace .pdfworkspace-overview-document {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+.pdfworkspace-preview-tooltip .tooltip-inner {
+    max-width: min(32rem, calc(100vw - 2rem));
+    padding: .65rem .8rem;
+    text-align: left;
+    font-size: .9rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 .path-mod-pdfworkspace .pdfworkspace-overview-actions {
     display: inline-flex;
@@ -984,7 +996,8 @@
 }
 .path-mod-pdfworkspace .pdfworkspace-overview-meta {
     color: var(--bs-secondary-color, #666);
-    font-size: .86rem;
+    font-size: .8rem;
+    white-space: nowrap;
 }
 .path-mod-pdfworkspace .pdfworkspace-overview-table td :is(p, div) {
     max-width: 100%;
@@ -997,49 +1010,35 @@
     .path-mod-pdfworkspace .pdfworkspace-overview-nav { top: 0; }
     .path-mod-pdfworkspace .pdfworkspace-overview-filters { align-items: stretch; }
     .path-mod-pdfworkspace .pdfworkspace-filter-field { flex: 1 1 9rem; }
-    .path-mod-pdfworkspace .pdfworkspace-overview-table thead {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-document { width: 7rem; }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-person { width: 8.5rem; }
+}
+@media (max-width: 700px) {
+    .path-mod-pdfworkspace .pdfworkspace-overview-table thead { display: none; }
     .path-mod-pdfworkspace .pdfworkspace-overview-table,
-    .path-mod-pdfworkspace .pdfworkspace-overview-table tbody,
-    .path-mod-pdfworkspace .pdfworkspace-overview-table tr,
-    .path-mod-pdfworkspace .pdfworkspace-overview-table td {
-        display: block !important;
-        width: 100% !important;
-    }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table tbody { display: block; }
     .path-mod-pdfworkspace .pdfworkspace-overview-table tr {
-        margin: .75rem 0;
-        padding: .45rem .75rem;
-        border: 1px solid var(--bs-border-color, #d8d5e0);
-        border-radius: .8rem;
-        background: var(--bs-body-bg, #fff);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: .5rem 0;
+        border-bottom: 1px solid var(--bs-border-color, #e2dfe8);
     }
     .path-mod-pdfworkspace .pdfworkspace-overview-table td {
-        display: flex !important;
-        gap: .75rem;
-        min-width: 0;
-        padding: .4rem .2rem;
+        /* Override the legacy mobile rules that hide columns by their old positions. */
+        display: block !important;
+        visibility: visible !important;
+        width: auto !important;
+        padding: .25rem .5rem;
         border: 0;
     }
-    .path-mod-pdfworkspace :is(.pdfworkspace-overview-table, .pdfworkspace-overview-table.pdfworkspace-has-votes)
-        :is(th, td):nth-child(n) {
-        width: 100% !important;
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td.pdfworkspace-col-content {
+        grid-column: 1 / -1;
     }
-    .path-mod-pdfworkspace .pdfworkspace-overview-table td:first-child {
-        display: block !important;
-        width: 100% !important;
-        min-width: 0;
-        font-weight: 600;
-    }
-    .path-mod-pdfworkspace .pdfworkspace-overview-table td:not(:first-child)::before {
+    .path-mod-pdfworkspace .pdfworkspace-overview-table td:not(.pdfworkspace-col-content)::before {
         content: attr(data-label);
-        flex: 0 0 7rem;
-        font-size: .82rem;
-        font-weight: 600;
+        display: block;
+        font-size: .75rem;
         color: var(--bs-secondary-color, #666);
     }
+    .path-mod-pdfworkspace .pdfworkspace-overview-table .pdfworkspace-col-count { text-align: left; }
 }

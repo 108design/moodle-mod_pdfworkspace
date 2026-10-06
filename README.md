@@ -28,8 +28,8 @@ Click a preview to open the full-size screenshot.
 </tr>
 <tr>
 <td align="center" width="50%" valign="middle">
-<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg" width="278" height="160" alt="Choose the audience for a new comment"></a><br>
-<sub>Choose the audience for a new comment</sub>
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new-comment2.jpg" width="278" height="160" alt="Format comments with bold text and lists"></a><br>
+<sub>Format comments with bold text and lists</sub>
 </td>
 <td align="center" width="50%" valign="middle">
 <a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-reply.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-reply.jpg" width="300" height="145" alt="Reply within a comment thread"></a><br>
@@ -38,8 +38,8 @@ Click a preview to open the full-size screenshot.
 </tr>
 <tr>
 <td align="center" width="50%" valign="middle">
-<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview.jpg" width="300" height="138" alt="Overview of questions, answers and reports"></a><br>
-<sub>Overview of questions, answers and reports</sub>
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview-new.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview-new.jpg" width="300" height="148" alt="Compact overview with document links and comment previews"></a><br>
+<sub>Compact overview with document links and comment previews</sub>
 </td>
 <td align="center" width="50%" valign="middle">
 <a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg" width="300" height="144" alt="Select workspace documents and download order"></a><br>
@@ -69,7 +69,6 @@ Click a preview to open the full-size screenshot.
 </table>
 
 </details>
-
 
 ## Features
 
@@ -101,6 +100,14 @@ audiences participants and staff may select. Replies keep the thread's audience.
 Teachers with course editing permission can change the displayed document names.
 A PDF with existing annotations is protected from replacement or removal, so
 comments keep referring to the document on which they were made.
+
+## Finding questions and replies
+
+The overview brings together questions, answers, your own posts and reported
+comments across the workspace. Compact tables show the document first, followed
+by a two-line comment preview and author details. Hover over a preview or focus
+it with the keyboard to read the full text. Open a document, question or reply
+link to jump directly to the corresponding PDF, marking and comment.
 
 ## Downloads and activity settings
 

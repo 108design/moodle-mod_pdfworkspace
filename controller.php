@@ -477,10 +477,7 @@ if ($action === 'view') { // Default.
 
 if ($action === 'statistic') {
 
-    require_capability('mod/pdfworkspace:viewstatistics', $context);
-    if (!\mod_pdfworkspace\visibility::is_staff($context, $USER->id)) {
-        throw new required_capability_exception($context, 'mod/pdfworkspace:viewstatistics', 'nopermissions', '');
-    }
+    pdfworkspace_require_statistics_access($context);
 
     require_once($CFG->dirroot . '/mod/pdfworkspace/model/statistics.class.php');
 
