@@ -1,5 +1,10 @@
 ## 2026100601 v1.6.0
 
+## 1.6.1 - 2026-10-08
+
+- Extend declared compatibility to Moodle 5.3 after native plugin checks.
+
+
 * Make overview tables compact, with documents first and two-line comment previews.
 * Show full preview text on hover or keyboard focus.
 * Open the correct PDF, page, marking and comment from overview links.

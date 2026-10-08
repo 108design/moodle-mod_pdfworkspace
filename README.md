@@ -78,7 +78,7 @@ Click a preview to open the full-size screenshot.
 - An overview of questions, answers, your own posts and reports.
 - Downloads of original PDFs, comments, annotated PDFs and selected workspace documents.
 
-Supports Moodle 4.5, 5.0, 5.1 and 5.2.
+Supports Moodle 4.5, 5.0, 5.1, 5.2 and 5.3.
 
 ## Installation
 
