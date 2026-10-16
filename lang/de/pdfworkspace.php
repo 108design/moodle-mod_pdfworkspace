@@ -565,3 +565,12 @@ $string['modulename_link'] = 'mod/pdfworkspace/view';
 $string['downloadmenu'] = 'Herunterladen';
 $string['downloadcurrentpdf'] = 'Aktuelles PDF';
 $string['downloadwholeworkspace'] = 'Gesamter Workspace als eine PDF-Datei';
+
+// Contextual administration help.
+$string['adminhelp'] = 'Hilfe zur Verwaltung';
+$string['adminhelpmore'] = 'Mehr dazu im Hilfepanel';
+$string['adminhelptopics'] = 'Hilfethemen';
+$string['adminhelp_overview'] = 'Websiteweite Einstellungen';
+$string['adminhelp_overview_article'] = '<p>Hier verwaltest Du die websiteweiten Einstellungen für PDF Workspace. Dokumente, Sichtbarkeit und erlaubte Downloadvarianten werden zusätzlich in der jeweiligen Aktivität festgelegt.</p><p>Prüfe Änderungen an einer passenden Testaktivität. Vorhandene Kommentare und ihre Zielgruppen werden durch Anzeigevorgaben nicht nachträglich umgeschrieben.</p>';
+$string['adminhelp_exports'] = 'PDF-Export einrichten';
+$string['adminhelp_exports_article'] = '<p>Für zusammengeführte PDF-Exporte wird eine passende Python-Umgebung auf dem Server benötigt. Trage den Pfad zum eingerichteten Interpreter ein und beachte die Installationshinweise des Plugins.</p><p>Die Freigabe einer Downloadvariante bleibt von den Einstellungen und Berechtigungen der Aktivität abhängig. Zum Testen eignen sich eigene Beispieldokumente.</p>';

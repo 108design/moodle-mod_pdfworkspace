@@ -905,3 +905,8 @@ function mod_pdfworkspace_output_fragment_open_add_comment_editor($args) {
                                              'value' => $data['editorFormat']]);
     return $out;
 }
+
+/** Contextual help for the explicitly registered administration pages only. */
+function mod_pdfworkspace_render_navbar_output(\renderer_base $renderer): string {
+    return \mod_pdfworkspace\local\admin_help::navbar($renderer);
+}

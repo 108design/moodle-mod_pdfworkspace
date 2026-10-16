@@ -603,3 +603,12 @@ $string['privacy:metadata:pdfworkspace_annotations:documentid'] = 'The PDF docum
 $string['downloadmenu'] = 'Download';
 $string['downloadcurrentpdf'] = 'Current PDF';
 $string['downloadwholeworkspace'] = 'Entire workspace as one PDF file';
+
+// Contextual administration help.
+$string['adminhelp'] = 'Administration help';
+$string['adminhelpmore'] = 'More in the help panel';
+$string['adminhelptopics'] = 'Help Topics';
+$string['adminhelp_overview'] = 'Site-wide settings';
+$string['adminhelp_overview_article'] = '<p>Manage site-wide PDF Workspace settings here. Documents, audiences and permitted download variants are also configured in each activity.</p><p>Check changes in a suitable test activity. Display defaults do not rewrite existing comments or their audiences.</p>';
+$string['adminhelp_exports'] = 'Setting up PDF export';
+$string['adminhelp_exports_article'] = '<p>Combined PDF exports require a suitable Python environment on the server. Enter the configured interpreter path and follow the plugin\'s installation instructions.</p><p>Availability of each download variant still depends on activity settings and permissions. Use your own sample documents for testing.</p>';

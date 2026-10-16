@@ -1,0 +1,113 @@
+/* Contextual help copied from Frontpage; only this plugin's registered settings page is affected. */
+body.mod-pdfworkspace-admin-help-page {
+    --mod-pdfworkspace-help-width: 24rem;
+    --mod-pdfworkspace-help-top: 4rem;
+}
+body.mod-pdfworkspace-admin-help-page #page.drawers { transition: none; }
+.mod-pdfworkspace-context-help[hidden] { display: none !important; }
+.mod-pdfworkspace-context-help {
+    position: fixed;
+    inset-block-start: var(--mod-pdfworkspace-help-top, 4rem);
+    inset-block-end: 1rem;
+    inset-inline-end: 1rem;
+    width: var(--mod-pdfworkspace-help-width, 24rem);
+    max-width: calc(100vw - 2rem);
+    display: flex;
+    flex-direction: column;
+    background: var(--bs-body-bg, #fff);
+    color: var(--bs-body-color, #212529);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--bs-border-radius, .5rem);
+    box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .12);
+    /* Above page/editor action bars (1025/1026), below the navbar and modals. */
+    z-index: 1027;
+}
+.mod-pdfworkspace-help-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    flex: 0 0 auto;
+}
+.mod-pdfworkspace-help-header > h2 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.mod-pdfworkspace-help-close {
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.mod-pdfworkspace-help-choices { padding: 1rem; flex: 0 0 auto; }
+.mod-pdfworkspace-help-content {
+    padding: 0 1rem 1rem;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+}
+@media (min-width: 992px) {
+    body.mod-pdfworkspace-admin-help-page.mod-pdfworkspace-help-open #page.drawers {
+        margin-inline-end: calc(var(--mod-pdfworkspace-help-width) + 2rem);
+    }
+}
+@media (max-width: 991.98px) {
+    .mod-pdfworkspace-context-help { width: calc(100vw - 2rem); inset-block-end: .5rem; }
+}
+
+/* Context entry is registered by the current page before its header is rendered. */
+.mod-pdfworkspace-help-navbar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    min-height: 2.75rem;
+    border: 0;
+    margin-inline: 0;
+    background: transparent;
+}
+.mod-pdfworkspace-help-navbar .icon { margin: 0; width: 1rem; height: 1rem; }
+/* Older Core has no exclusive drawer API. Mask only while help is open; preserve native drawer state/preferences. */
+body.mod-pdfworkspace-help-legacy-drawers.mod-pdfworkspace-help-open .drawer.drawer-right { visibility: hidden; pointer-events: none; }
+
+/* Keep Moodle's native flex/block field layout and intrinsic control widths.
+   Reserve only the small space occupied by linked help, including on wide widgets. */
+.mform .mod-pdfworkspace-form-help-field > :not(.mod-pdfworkspace-form-help):not(.form-control-feedback):not(.form-check) {
+    max-width: calc(100% - 2rem);
+}
+.mform .mod-pdfworkspace-form-help-field > .mod-pdfworkspace-form-help,
+.mform .mod-pdfworkspace-form-help-field > .form-check > .mod-pdfworkspace-form-help {
+    flex: none;
+    margin: 0 !important;
+    margin-inline-start: .5rem !important;
+    padding-top: .45rem;
+}
+.mform .mod-pdfworkspace-form-help-field > .form-check > .mod-pdfworkspace-form-help { padding-top: 0; }
+
+/* Keep native labels, aligning only short help to the label-column edge. */
+.mform .mod-pdfworkspace-form-help-label > .form-label-addon { margin-inline-start: auto; }
+
+/* Shared topic-first help header; the title below belongs to the selected article. */
+
+.mod-pdfworkspace-help-header { align-items: flex-start; }
+.mod-pdfworkspace-help-header > h2 { margin: 0; }
+.mod-pdfworkspace-help-choices { padding: 0; flex: 1 1 auto; min-width: 0; }
+.mod-pdfworkspace-help-choices .form-label {
+    display: block; font-size: .75rem; font-weight: 600; line-height: 1.4;
+    color: var(--bs-secondary-color, #6c757d); margin: 0 0 .35rem;
+}
+.mod-pdfworkspace-help-choices select { width: 100%; max-width: 100%; }
+.mod-pdfworkspace-help-close {
+    flex: 0 0 auto; width: 2.25rem; height: 2.25rem; padding: 0;
+    font-size: 1.5rem; line-height: 1; margin: 0;
+}
+.mod-pdfworkspace-help-content { padding-block-start: 1rem; }
+.mod-pdfworkspace-help-content article > h3 {
+    font-size: 1rem; font-weight: 600; line-height: 1.4; margin: 0 0 .75rem;
+}
