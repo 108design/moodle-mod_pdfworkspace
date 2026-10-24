@@ -58,7 +58,7 @@ class statistics implements \renderable, \templatable {
         $this->tabledata = $statistics->get_tabledata();
 
         $params = $statistics->get_chartdata();
-        $PAGE->requires->js_init_call('setCharts', $params, true);
+        $PAGE->requires->js_call_amd('mod_pdfworkspace/statistic', 'init', $params);
     }
 
     /**

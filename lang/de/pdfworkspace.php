@@ -574,3 +574,46 @@ $string['adminhelp_overview'] = 'Websiteweite Einstellungen';
 $string['adminhelp_overview_article'] = '<p>Hier verwaltest Du die websiteweiten Einstellungen für PDF Workspace. Dokumente, Sichtbarkeit und erlaubte Downloadvarianten werden zusätzlich in der jeweiligen Aktivität festgelegt.</p><p>Prüfe Änderungen an einer passenden Testaktivität. Vorhandene Kommentare und ihre Zielgruppen werden durch Anzeigevorgaben nicht nachträglich umgeschrieben.</p>';
 $string['adminhelp_exports'] = 'PDF-Export einrichten';
 $string['adminhelp_exports_article'] = '<p>Für zusammengeführte PDF-Exporte wird eine passende Python-Umgebung auf dem Server benötigt. Trage den Pfad zum eingerichteten Interpreter ein und beachte die Installationshinweise des Plugins.</p><p>Die Freigabe einer Downloadvariante bleibt von den Einstellungen und Berechtigungen der Aktivität abhängig. Zum Testen eignen sich eigene Beispieldokumente.</p>';
+
+$string['invaliddocument'] = 'Das PDF-Dokument wurde nicht gefunden oder konnte nicht gelesen werden.';
+$string['clicktodownload'] = 'PDF herunterladen: {$a}';
+$string['page-mod-pdfworkspace-x'] = 'Beliebige Aktivitätsseite von PDF Workspace';
+$string['adminhelp_overview_help'] = 'Diese Einstellungen legen die Vorgaben der Website fest. Zielgruppe und erlaubte Werkzeuge prüfst Du zusätzlich in jeder Aktivität.';
+$string['adminhelp_exports_help'] = 'PDF-Downloads hängen von den Einstellungen der Aktivität ab. Kombinierte Exporte benötigen zusätzlich die konfigurierte Python-Umgebung; Formeln nutzen den lokalen TeX-Renderer von Moodle.';
+
+$string['activityhelp'] = 'PDF-Workspace-Hilfe';
+$string['adminhelp_courseoverview'] = 'PDF-Aktivitäten in diesem Kurs';
+$string['adminhelp_courseoverview_help'] = 'Öffne eine PDF-Aktivität aus dieser Liste. Sichtbarkeit und Bearbeitungsaktionen richten sich nach Deinen Kursrechten.';
+$string['adminhelp_courseoverview_article'] = '<p>Diese Übersicht zeigt die für Dich verfügbaren PDF-Workspace-Aktivitäten des Kurses, ihre Beschreibungen und letzte Änderungen. Wähle den Namen einer Aktivität, um ihre Dokumente und Diskussionen zu öffnen.</p><p>Bearbeitung und Sichtbarkeit lassen sich nur mit den entsprechenden Rechten ändern. Downloads und Annotationswerkzeuge werden für jede Aktivität gesondert eingestellt.</p>';
+
+
+$string['adminhelp_viewer'] = 'PDFs lesen und markieren';
+$string['adminhelp_viewer_help'] = 'Navigiere mit dem Cursor oder wähle Pin, Rahmen, Text, Stift oder Marker, soweit Rolle und Aktivität das erlauben.';
+$string['adminhelp_viewer_article'] = '<p>Wähle einen Dokumentreiter und nutze Zoom und Seitensteuerung zum Lesen. Vollbild vergrößert den Arbeitsbereich; Escape führt zur Seite und zum vorherigen Fokus zurück.</p><p>Zu Pins und Rahmen kannst Du eine Diskussion führen. Text, Stift und Marker hängen von den Aktivitätseinstellungen und Deinen Rechten ab. Mit Shift zeichnest Du eine gerade Stift- oder Markerlinie. Rückgängig und Wiederholen umfassen bis zu 20 eigene neue Zeichnungen und Textfelder in diesem Tab.</p>';
+
+$string['adminhelp_discussion'] = 'Kommentare und Zielgruppen';
+$string['adminhelp_discussion_help'] = 'Prüfe vor dem Senden die Zielgruppe. Antworten behalten die Zielgruppe ihrer Markierung; persönliche Notizen siehst nur Du.';
+$string['adminhelp_discussion_article'] = '<p>Klicke auf eine Markierung, um ihre Diskussion zu lesen oder zu beantworten. Prüfe vor dem Senden die gewählte Zielgruppe. Die verfügbaren Zielgruppen richten sich nach Aktivität und Rolle; Antworten behalten die Zielgruppe der Markierung.</p><p>Mit Fragenfiltern und Suche findest Du Diskussionen. Persönliche Notizen sind nur für ihre Verfasser sichtbar. Die Zielgruppe für Lehrende umfasst Verfasser und berechtigte Lehrende. Die Zielgruppe für ausgewählte Teilnehmende ist nur für Verfasser und Empfänger sichtbar. Für ausgeblendete Kommentare gelten zusätzliche Moderationsrechte.</p>';
+
+$string['adminhelp_downloads'] = 'PDFs herunterladen';
+$string['adminhelp_downloads_help'] = 'Das Downloadmenü zeigt die für Deine Rolle und diese Aktivität verfügbaren Varianten. Arbeitsbereichsdownloads verwenden die gewählten Dokumente und gespeicherte Exportreihenfolge.';
+$string['adminhelp_downloads_article'] = '<p>Das Downloadmenü bietet Originaldokument, Kommentare und kombinierte Varianten an, soweit Einstellungen und Rechte das erlauben. Exporte enthalten nur Markierungen und Kommentare, die Du sehen darfst. Bereits in den Original-PDFs vorhandene Inhalte bleiben erhalten.</p><p>Arbeitsbereichsdownloads nutzen die in der Aktivität gewählten Dokumente und die Exportreihenfolge, unabhängig von den Dokumentreitern. Kombinierte Exporte brauchen die eingerichteten lokalen Python-Werkzeuge; Formeln verwenden den lokalen Moodle-TeX-Renderer.</p>';
+
+$string['adminhelp_moderation'] = 'Diskussionen moderieren';
+$string['adminhelp_moderation_help'] = 'Nutze Meldungsübersicht und Moderationsaktionen entsprechend Deiner Rolle. Ausblenden und Löschen haben unterschiedliche Folgen.';
+$string['adminhelp_moderation_article'] = '<p>Gemeldete Kommentare erscheinen in der Meldungsübersicht, soweit Deine Rolle das erlaubt. Prüfe die Diskussion vor einer Aktion. Ausblenden beschränkt die Anzeige nach den Moderationsregeln; Löschen entfernt den Kommentar über den vorgesehenen Ablauf.</p><p>Berechtigte Lehrende können weitere eingeschränkte Diskussionen sehen. Persönliche Notizen bleiben persönlich. Moderationsaktionen ändern die Zielgruppe bestehender Threads nicht.</p>';
+
+$string['adminhelp_activityoverview'] = 'Diskussionen in der Übersicht finden';
+$string['adminhelp_activityoverview_help'] = 'Wähle Übersichtsreiter, Status und Dokumentfilter und klicke auf Anzeigen. Ein Ergebnis öffnet seine Markierung im PDF.';
+$string['adminhelp_activityoverview_article'] = '<p>Fragen, eigene Beiträge und weitere für Deine Rolle verfügbare Reiter zeigen die Diskussionen, die Du sehen darfst. Die Statusauswahl hängt vom Reiter ab. Bei mehreren PDFs erscheint ein Dokumentfilter; die Einträge pro Seite steuern die Seiteneinteilung.</p><p>Klicke auf Anzeigen, um die Filter anzuwenden, oder auf Zurücksetzen für die Ausgangsansicht. Sortierbare Spaltenüberschriften ändern die Reihenfolge. Dokument oder Kommentarvorschau öffnen die zugehörige PDF-Seite und Diskussion.</p>';
+$string['adminhelp_activitysettings'] = 'Diese Aktivität einrichten';
+$string['adminhelp_activitysettings_help'] = 'Wähle Dokumente, Zielgruppen, Werkzeuge und Downloads. Ein PDF mit bestehenden Markierungen kann nicht ersetzt oder entfernt werden.';
+$string['adminhelp_activitysettings_article'] = '<p>Füge PDFs hinzu und speichere die Aktivität, bevor Du Auswahl und Reihenfolge für Arbeitsbereichsexporte änderst. Die Zeilensteuerung legt die Exportreihenfolge fest; Dokumentreiter behalten ihre eigene Reihenfolge. PDFs mit bestehenden Markierungen sind gegen Ersetzen und Entfernen gesperrt.</p><p>Erlaubte Zielgruppen und die Standardzielgruppe gelten für neue Markierungen. Sie ändern bestehende Diskussionen nicht. Aktiviere die benötigten Werkzeuge und Downloadvarianten für Teilnehmende; zusätzlich gelten die jeweiligen Rechte.</p>';
+$string['overviewfilterstatus'] = 'Statusfilter';
+$string['overviewfilterstatus_help'] = 'Wähle den Status oder die Abonnementansicht für diesen Reiter und klicke auf Anzeigen.';
+$string['overviewfilterdocument'] = 'Dokumentfilter';
+$string['overviewfilterdocument_help'] = 'Beschränke die Ergebnisse auf ein PDF und klicke auf Anzeigen.';
+$string['overviewfiltersize'] = 'Einträge pro Seite';
+$string['overviewfiltersize_help'] = 'Wähle die Anzahl der Ergebnisse pro Seite und klicke auf Anzeigen.';
+$string['audiencedefault_student_help'] = 'Wähle eine erlaubte Standardzielgruppe für neue Teilnehmer-Markierungen. Bestehende Markierungen und Antworten behalten ihre Zielgruppe.';
+$string['audiencedefault_staff_help'] = 'Wähle eine erlaubte Standardzielgruppe für neue Markierungen von Lehrenden. Bestehende Markierungen und Antworten behalten ihre Zielgruppe.';

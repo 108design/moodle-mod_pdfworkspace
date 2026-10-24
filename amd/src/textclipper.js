@@ -67,7 +67,7 @@ const TRIM_END_REGEX = /\s+$/;
  *
  * @return The clipped string.
  */
-function clip(string, maxLength, options = {}) {
+export function clip(string, maxLength, options = {}) {
 
     if (!string) {
         return '';

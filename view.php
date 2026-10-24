@@ -106,7 +106,7 @@ $PAGE->set_heading($course->fullname);
 // Display course name, navigation bar at the very top and "Dashboard->...->..." bar.
 $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/viewer.css', ['v' => '2026092809.2']));
 $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/ui.css', ['v' => '2026100602']));
-$PAGE->requires->js(new moodle_url('/mod/pdfworkspace/shared/tooltips.js', ['v' => '2026100600']));
+$PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 echo $OUTPUT->header();
 
 // Render the activity information.

@@ -1,3 +1,25 @@
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for amd/src/admin_help_legacy.js.
+ *
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // Copyright (C) 2026 Andreas Giesen. See LICENSE.
 import {publish, subscribe} from 'core/pubsub';
 import DrawerEvents from 'core/drawer_events';
@@ -21,6 +43,13 @@ export const init = config => {
     const exclusiveDrawers = Boolean(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED && DrawerEvents.DRAWER_EXCLUSIVE_RELEASED);
     document.body.classList.toggle('mod-pdfworkspace-help-legacy-drawers', !exclusiveDrawers);
 
+    // A mobile drawer owns a modal focus lock; release it through Core without saving preferences.
+    const closeMobileDrawers = () => {
+        if (!window.matchMedia('(max-width: 991.98px)').matches) return;
+        document.querySelectorAll('.drawer.drawer-left.show, .drawer.drawer-right.show').forEach(node => {
+            Drawers.getDrawerInstanceForNode(node).closeDrawer({focusOnOpenButton: false, updatePreferences: false});
+        });
+    };
     const position = () => {
         const nav = document.querySelector('.navbar.fixed-top');
         const top = nav ? Math.max(0, nav.getBoundingClientRect().bottom) + 12 : 12;
@@ -49,6 +78,7 @@ export const init = config => {
     const show = (topic, trigger) => {
         if (topic && !hasTopic(topic)) return;
         if (trigger) opener = trigger;
+        closeMobileDrawers();
         showTopic(topic || activeTopic || choice.value);
         position();
         if (panel.hidden) {
@@ -83,10 +113,11 @@ export const init = config => {
         event.preventDefault();
         if (button && !panel.hidden) { hide(); return; }
         const popover = link?.closest('.popover');
-        // Moodle 5.3 describes the popover body, rather than its outer wrapper.
-        const describedId = popover?.querySelector('.popover-body')?.id || popover?.id;
-        const icon = describedId
-            ? document.querySelector(`.help-icon[aria-describedby="${CSS.escape(describedId)}"]`) : null;
+        // Moodle adapters may describe the outer popover or its body; match the actual trigger.
+        const describedIds = [popover?.id, popover?.querySelector('.popover-body')?.id].filter(Boolean);
+        const icon = [...document.querySelectorAll('.help-icon[aria-describedby]')]
+            .find(candidate => candidate.getAttribute('aria-describedby').split(/\s+/)
+                .some(id => describedIds.includes(id)));
         const trigger = button || icon || document.querySelector('[data-pdfworkspace-help-open]');
         if (topic) {
             jQuery('.mod-pdfworkspace-context-help-icon').popover('hide');
@@ -101,7 +132,9 @@ export const init = config => {
     });
     // Native tools win when explicitly reopened. Their DOM and input state are never replaced.
     document.addEventListener(Drawers.eventTypes.drawerShow, event => {
-        if (event.target.classList.contains('drawer-right') && !panel.hidden) hide(false);
+        if ((event.target.classList.contains('drawer-right') ||
+                (event.target.classList.contains('drawer-left') && window.matchMedia('(max-width: 991.98px)').matches))
+                && !panel.hidden) hide(false);
     });
     // A second overlay now owns the native exclusive request; do not release its claim.
     if (exclusiveDrawers) subscribe(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED, ({region} = {}) => {
@@ -109,6 +142,9 @@ export const init = config => {
     });
     document.addEventListener('show.bs.modal', () => hide(false));
     jQuery(document).on('show.bs.modal', () => hide(false));
-    window.addEventListener('resize', position);
+    window.addEventListener('resize', () => {
+        position();
+        if (!panel.hidden) closeMobileDrawers();
+    });
     if (config.topic) show(config.topic);
 };

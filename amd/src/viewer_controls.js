@@ -1,10 +1,35 @@
 /**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for amd/src/viewer_controls.js.
+ *
+ * @package   mod_pdfworkspace
+ * @copyright 2018 RWTH Aachen, Rabea de Groot and Ahmad Obeid (see README.md)
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+/**
  * @package   mod_pdfworkspace
  * @copyright 2018 RWTH Aachen, Rabea de Groot and Ahmad Obeid (see README.md)
  * @copyright 2026 Andreas Giesen <andreas@108design.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
+import $ from 'jquery';
+
 
 function addDropdownNavigation(Y, __capabilities, __cmid) {
 
@@ -138,7 +163,7 @@ function fixCommentForm() {
 }
 
 function fixForm(top, fixedTop, oldWidth) {
-    var y = $(this).scrollTop();
+    var y = $(window).scrollTop();
     if (y >= top + 1 - fixedTop) {
         $('#comment-list-form').addClass('fixtool');
         document.getElementById("comment-list-form").style.top = fixedTop + "px";
@@ -162,7 +187,7 @@ let pdfworkspaceFullscreenFocus = null;
 function makeFullScreen() {
     const viewer = document.getElementById('pdfworkspace_index');
     const entering = !pdfworkspaceFullscreenPlaceholder;
-    const button = viewer.querySelector('[onclick="makeFullScreen()"]');
+    const button = viewer.querySelector('[data-action="pdfworkspace-fullscreen"]');
     const img = button.querySelector('img');
     if (entering) {
         pdfworkspaceFullscreenFocus = document.activeElement;
@@ -179,22 +204,19 @@ function makeFullScreen() {
     }
     const title = M.util.get_string(entering ? 'fullscreenBack' : 'fullscreen', 'pdfworkspace');
     button.title = img.title = img.alt = title;
+    button.setAttribute('aria-label', title);
     button.setAttribute('aria-pressed', String(entering));
     img.src = M.util.image_url(entering ? 'fullscreen_collapse' : 'fullscreen', 'pdfworkspace');
     // Recalculate toolbar overflow at the new width.
     window.dispatchEvent(new Event('resize'));
 }
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && pdfworkspaceFullscreenPlaceholder) {
-        makeFullScreen();
-    }
-});
+
 
 /**
  * Check just one checkbox under the comment form
  * 
  */
-function checkOnlyOneCheckbox( Y ) {
+function checkOnlyOneCheckbox() {
     var radios = document.getElementsByClassName('pdfworkspace-radio');
     var anonymousCheckbox = document.getElementById('anonymousCheckbox');
     var privateCheckbox = document.getElementById('privateCheckbox');
@@ -239,7 +261,7 @@ function checkOnlyOneCheckbox( Y ) {
     }
 }
 
-function setTimeoutNotification(){
+export function setTimeoutNotification(){
     setTimeout(function(){
         let notificationpanel = document.getElementById("user-notifications");
         while (notificationpanel.hasChildNodes()) {  
@@ -247,3 +269,19 @@ function setTimeoutNotification(){
         } 
     }, 10000);
 }
+
+let initialised = false;
+/** Bind viewer controls once after Moodle has rendered the page. */
+export const init = () => {
+    const viewer = document.getElementById('pdfworkspace_index');
+    if (!viewer || initialised) return;
+    initialised = true;
+    checkOnlyOneCheckbox();
+    viewer.querySelector('[data-action="pdfworkspace-fullscreen"]')?.addEventListener('click', event => {
+        event.preventDefault();
+        makeFullScreen();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && pdfworkspaceFullscreenPlaceholder) makeFullScreen();
+    });
+};

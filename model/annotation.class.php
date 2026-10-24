@@ -141,9 +141,11 @@ class pdfworkspace_annotation {
     }
 
     /**
-     * Method checks whether the annotation as well as possible comments attached to it
-     * belong to the current user.     *
-     * @return
+     * Check annotation ownership and whether other users have replied.
+     *
+     * @param \stdClass $annotation Annotation record, including id and userid.
+     * @param int $cmid Course module ID used for the native deletion capabilities.
+     * @return array{0:bool,1?:string} Allowed flag and an optional translated refusal reason.
      */
     public static function deletion_allowed($annotation, $cmid) {
 

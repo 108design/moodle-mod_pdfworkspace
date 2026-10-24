@@ -488,7 +488,6 @@ if ($action === 'statistic') {
     $stringman = get_string_manager();
     $strings = $stringman->load_component_strings('pdfworkspace', 'en'); // Method gets the strings of the language files.
     $PAGE->requires->strings_for_js(array_keys($strings), 'pdfworkspace'); // Method to use the language-strings in javascript.
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/statistic.js?ver=0004"));
     $myrenderer = $PAGE->get_renderer('mod_pdfworkspace');
     $capabilities = new stdClass();
     $capabilities->viewquestions = has_capability('mod/pdfworkspace:viewquestions', $context);

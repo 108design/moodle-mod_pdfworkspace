@@ -809,5 +809,11 @@ function xmldb_pdfworkspace_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026100200, 'pdfworkspace');
     }
 
+    if ($oldversion < 2026102400) {
+        // Formula export now uses Moodle locally; retire the former Google selection.
+        unset_config('latexapi', 'mod_pdfworkspace');
+        upgrade_mod_savepoint(true, 2026102400, 'pdfworkspace');
+    }
+
     return true;
 }

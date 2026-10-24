@@ -6,6 +6,14 @@
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * The original MIT notice below remains in force for upstream code.
  */
+import $ from 'jquery';
+import templates from 'core/templates';
+import notification from 'core/notification';
+import jsPDF from 'mod_pdfworkspace/jspdf';
+import Fragment from 'core/fragment';
+import {init as initControls, setTimeoutNotification} from 'mod_pdfworkspace/viewer_controls';
+import {clip} from 'mod_pdfworkspace/textclipper';
+
 
 /**
  * Function removes the spacing between tab navigation and document tool bar
@@ -13,11 +21,11 @@
  * @param {type} Y
  * @return {undefined}
  */
-function adjustPdfworkspaceNavbar(Y) {
+function adjustPdfworkspaceNavbar() {
     let navbar = document.getElementsByClassName('nav');
     for (let i = 0; i < navbar.length; i++) {
         (function (innerI) {
-            tab = navbar[innerI];
+            const tab = navbar[innerI];
             tab.classList.add('pdfworkspacenavbar');
         })(i);
     }
@@ -46,9 +54,7 @@ function adjustPdfworkspaceNavbar(Y) {
 //OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //SOFTWARE.
 //
-//R: The first parameter has to be Y, because it is a default YUI-object, because moodle gives this object first.
-async function startIndex(
-    Y,
+export async function init(
     _cm,
     _documentObject,
     _contextId,
@@ -60,6 +66,8 @@ async function startIndex(
     _commid = null,
     _editorSettings
 ) {
+    adjustPdfworkspaceNavbar();
+    initControls();
     let pdfRenderer;
     try {
         pdfRenderer = await import(M.cfg.wwwroot + '/mod/pdfworkspace/shared/pdf-renderer.mjs?v=2026092804');
@@ -70,14 +78,7 @@ async function startIndex(
     }
     // 3. parameter war mal _fileid
 
-    // Require amd modules.
-    require(['jquery', 'core/templates', 'core/notification', 'mod_pdfworkspace/jspdf', 'core/fragment'], function (
-        $,
-        templates,
-        notification,
-        jsPDF,
-        Fragment
-    ) {
+    // Moodle dependencies are explicit module imports.
         var currentAnnotations = [];
         (function (modules) {
             // webpackBootstrap
@@ -1231,34 +1232,8 @@ async function startIndex(
                                          * @returns {string} the same string suited for .csv files
                                          */
                                         function sanatizeString(text){
-                                            // Remove all HTML-Tags except img
-                                            const div = document.createElement('div');
-                                            div.innerHTML = text;
-                                            const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-                                            let result = '';
-
-                                            while(walker.nextNode()) {
-                                                const node = walker.currentNode;
-
-                                                if(node.nodeType === Node.TEXT_NODE) {
-                                                    const parentTag = node.parentNode?.tagName?.toLowerCase();
-                                                    if (parentTag !== 'a') {
-                                                        result += node.textContent;
-                                                    }
-                                                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'img') {
-                                                    result += node.outerHTML;
-                                                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'a') {
-                                                    const linkText = node.textContent || '';
-                                                    const href = node.getAttribute('href') || '';
-                                                    result += linkText + ' [URL: ' + href + ']';
-                                                }
-                                            }
-
-                                            // In the comments linebreaks are represented by <br \>-Tags. Sometimes there is an additional \n
-                                            // We remove all \n that already exist.
-                                            result = result.replace(/\n/g, '');
-                                            // Escape doublequotes
-                                            result = result.replaceAll(/"/g, '""');
+                                            // Print text fragments are already plain text from the server.
+                                            let result = String(text).replace(/\n/g, '').replaceAll('"', '""');
 
                                             return result;
                                         }
@@ -1415,12 +1390,8 @@ async function startIndex(
                                             text,
                                             characters = 130
                                         ) {
-                                            // In the comments linebreaks are represented by <br \>-Tags. Sometimes there is an additional \n
-                                            // jsPDF needs \n-linebreaks so we replace <br \> with \n. But first we remove all \n that already exist.
-                                            text = text.replace(/\n/g, '');
-                                            text = text.replace(/<br \/>/g, '\n');
-                                            // Remove all other HTML-Tags.
-                                            text = $('<div>').html(text).text();
+                                            // Text fragments are prepared on the server, including line breaks.
+                                            text = String(text);
 
                                             var stringarray = doc.splitTextToSize(text, characters);
                                             var textbit;
@@ -6788,7 +6759,7 @@ async function startIndex(
                                         fill: (0, _normalizeColor2.default)(a.color || '#000'),
                                         fontSize: a.size,
                                     });
-                                    text.innerHTML = a.content;
+                                    text.textContent = a.content;
                                     return text;
                                 }
                                 module.exports = exports['default'];
@@ -11168,7 +11139,6 @@ async function startIndex(
                 }
             },
         ]);
-    }); //require JQuery closed
 }
 
 function read_visibility_of_checkbox() {

@@ -1,3 +1,12 @@
+## 1.10.0 - Unreleased
+
+- Sanitize comment output while retaining Moodle filters, and keep textbox annotations as plain text.
+- Limit print images to owned Moodle files with verified image types; use the local Moodle TeX renderer for formulas.
+- Load the viewer, overview, tooltips and document settings through Moodle AMD modules.
+- Add contextual help for activity tools, audiences, filters and downloads in English and German.
+- Keep mobile help usable alongside the native course index without saving drawer preferences.
+- Correct course-index loading, supported course-format layout, missing strings and PHP documentation.
+
 ## 2026100601 v1.6.0
 
 ## 1.6.1 - 2026-10-08

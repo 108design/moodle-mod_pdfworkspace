@@ -10,7 +10,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../shared/index.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../amd/src/viewer.js', import.meta.url), 'utf8');
 
 function bundledFunction(startName, nextName) {
     const start = source.indexOf(`function ${startName}(`);

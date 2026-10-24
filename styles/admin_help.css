@@ -91,7 +91,8 @@ body.mod-pdfworkspace-help-legacy-drawers.mod-pdfworkspace-help-open .drawer.dra
 .mform .mod-pdfworkspace-form-help-field > .form-check > .mod-pdfworkspace-form-help { padding-top: 0; }
 
 /* Keep native labels, aligning only short help to the label-column edge. */
-.mform .mod-pdfworkspace-form-help-label > .form-label-addon { margin-inline-start: auto; }
+.mform .mod-pdfworkspace-form-help-label { display: flex; align-items: flex-start; }
+.mod-pdfworkspace-form-help-label > .form-label-addon { margin-inline-start: auto; flex: 0 0 auto; }
 
 /* Shared topic-first help header; the title below belongs to the selected article. */
 
@@ -149,3 +150,8 @@ body.mod-pdfworkspace-help-legacy-drawers.mod-pdfworkspace-help-open .drawer.dra
     grid-row: 2;
     align-self: center;
 }
+
+.mod-pdfworkspace-setting-control { display: flex; align-items: flex-start; gap: .5rem; max-width: 100%; }
+.mod-pdfworkspace-setting-control > :first-child { min-width: 0; max-width: calc(100% - 2rem); flex: 0 1 auto; }
+.mod-pdfworkspace-setting-control > .form-checkbox { flex: 0 1 auto; margin-bottom: 0; }
+.mod-pdfworkspace-setting-control > .mod-pdfworkspace-context-help-icon { flex: 0 0 auto; margin: .25rem 0 0; }

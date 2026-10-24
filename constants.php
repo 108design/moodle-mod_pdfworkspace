@@ -26,22 +26,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Request URL for transforming latex code into a png image
- * The latex data needs to be added after chl=
- */
-define('LATEX_TO_PNG_REQUEST',   'https://chart.googleapis.com/chart?cht=tx&chl=');
-
-/**
- * Define whether to use googleapi or moodle Latex Library
- */
-define('LATEX_TO_PNG_MOODLE', 0);
-define('LATEX_TO_PNG_GOOGLE_API', 1);
-
-
-/**
  * Prefix needed for encode64 images
  */
-define('IMAGE_PREFIX', 'data:image/png;base64,');
+define('PDFWORKSPACE_IMAGE_PREFIX', 'data:image/png;base64,');
 
 /**
  * Editor unlimited files variable

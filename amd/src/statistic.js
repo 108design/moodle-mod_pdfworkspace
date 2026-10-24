@@ -1,13 +1,35 @@
 /**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for amd/src/statistic.js.
+ *
+ * @package   mod_pdfworkspace
+ * @copyright 2018 RWTH Aachen, Friederike Schwager (see README.md)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+/**
  * @package   mod_pdfworkspace
  * @copyright 2018 RWTH Aachen, Friederike Schwager (see README.md)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  */
+import Chart from 'core/chartjs';
 
-// R: The first parameter has to be Y, because it is a default YUI-object (demanded by moodle).
-function setCharts(Y, names, otherquestions, myquestions, otheranswers, myanswers, otherprivate, myprivate, otherprotectedquestions, myprotectedquestions, otherprotectedanswers, myprotectedanswers) {
-    require(['core/chartjs'], function (Chart) {
+
+export function init( names, otherquestions, myquestions, otheranswers, myanswers, otherprivate, myprivate, otherprotectedquestions, myprotectedquestions, otherprotectedanswers, myprotectedanswers) {
         // On small screens set width depending on number of annotators. Otherwise the diagram is very small.
         let width = Math.max(names.length * 25, 300);
         width = names.length * 40;
@@ -144,7 +166,6 @@ function setCharts(Y, names, otherquestions, myquestions, otheranswers, myanswer
             }
         });
 
-    });
 }
 
 /**

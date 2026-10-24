@@ -79,9 +79,6 @@ function pdfworkspace_display_embed($pdfworkspace, $cm, $course, $file, $page = 
     // Method to use the language-strings in javascript.
     $PAGE->requires->strings_for_js(array_keys($strings), 'pdfworkspace');
     // Load and execute the javascript files.
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/textclipper.js"));
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/index.js?ver=00077"));
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/locallib.js?ver=00009"));
 
     // Pass parameters from PHP to JavaScript.
 
@@ -109,13 +106,10 @@ function pdfworkspace_display_embed($pdfworkspace, $cm, $course, $file, $page = 
     $editorsettings->active_editor = get_class(editors_get_preferred_editor(FORMAT_HTML));
 
     $params = [$cm, $documentobject, $context->id, $USER->id, $capabilities, $toolbarsettings, $page, $annoid, $commid, $editorsettings];
-    $PAGE->requires->js_init_call('adjustPdfworkspaceNavbar', null, true);
-    $PAGE->requires->js_init_call('startIndex', $params, true);
+    $PAGE->requires->js_call_amd('mod_pdfworkspace/viewer', 'init', $params);
     // The renderer renders the original index.php / takes the template and renders it.
     $myrenderer = $PAGE->get_renderer('mod_pdfworkspace');
     echo $myrenderer->render_index(new index($pdfworkspace, $capabilities, $file));
-    $PAGE->requires->js_init_call('checkOnlyOneCheckbox', null, true);
-    $PAGE->requires->js_init_call('checkOnlyOneCheckbox', null, true);
 
     pdfworkspace_print_intro($pdfworkspace, $cm, $course);
 
@@ -163,129 +157,23 @@ function pdfworkspace_get_relativelink($content, $commentid, $context) {
 }
 
 function pdfworkspace_extract_images($contentarr, $itemid, $context=null) {
-    // Remove quotes here, in case if there is no math form.
-    if (gettype($contentarr) === 'string') {
-        $str = preg_replace('/[\"]/', "", $contentarr);
-        $contentarr = [$str];
+    if (is_string($contentarr)) {
+        $contentarr = [$contentarr];
     }
-    $res = [];
-    $index = 0;
+    $result = [];
     foreach ($contentarr as $content) {
-        $index++;
-        if (gettype($content) === "array") {
-            $res[] = $content;
-            continue;
+        if (is_array($content)) {
+            $result[] = $content; // Locally generated Moodle formula images.
+        } else {
+            $result = pdfworkspace_split_content_image($content, $result, $itemid, $context);
         }
-        $res = pdfworkspace_split_content_image($content, $res, $itemid, $context);
     }
-    return $res;
+    return $result;
 }
 
-function pdfworkspace_split_content_image($content, $res, $itemid, $context=null) {
-    global $CFG;
-    // Gets all files in the comment with id itemid.
-    $fs = get_file_storage();
-    $files = $fs->get_area_files($context->id, 'mod_pdfworkspace', 'post', $itemid);
-    $fileinfo = [];
-    foreach ($files as $file) {
-        if ($file->is_directory() && $file->get_filepath() === '/') {
-            continue;
-        }
-        $info = [];
-        $info['fileid'] = $file->get_id();
-        $info['filename'] = $file->get_filename();
-        $info['filepath'] = $file->get_filepath();
-        $info['filecontent'] = $file->get_content();
-        $info['filesize'] = $file->get_filesize();
-        $info['filemimetype'] = $file->get_mimetype();
-        $fileinfo[] = $info;
-    }
-
-    $imgmatch = [];
-    $firststr = '';
-    $data = [];
-    while (preg_match_all('/<img/', $content, $imgmatch)) {
-        $offsetlength = strlen($content);
-        $imgposstart = strpos($content, '<img');
-        $imgposend = strpos($content, '>', $imgposstart);
-
-        $firststr = substr($content, 0, $imgposstart);
-        $imgstr = substr($content, $imgposstart, $imgposend - $imgposstart + 1);
-        $laststr = substr($content, $imgposend + 1, $offsetlength - $imgposend);
-
-        preg_match('/(https...{1,}[.]((gif)|(jpe)g*|(jpg)|(png)|(svg)|(svgz)))/i', $imgstr, $url);
-        preg_match('/(gif)|(jpe)g*|(jpg)|(png)|(svg)|(svgz)/i', $url[0], $format);
-        if (!$format) {
-            throw new \moodle_exception('error:unsupportedextension', 'pdfworkspace');
-        }
-        if (in_array('jpg', $format) || in_array('jpeg', $format) || in_array('jpe', $format)
-        || in_array('JPG', $format) || in_array('JPEG', $format) || in_array('JPE', $format)) {
-            $format[0] = 'jpeg';
-        }
-
-        $tempinfo = [];
-        $encodedurl = urldecode($url[0]);
-        foreach ($fileinfo as $file) {
-            $count = substr_count($encodedurl, $file['filename']);
-            if ($count) {
-                $tempinfo = $file;
-                break;
-            }
-        }
-
-        try {
-            if ($tempinfo) {
-                $imagedata = 'data:' . $tempinfo['filemimetype'] . ';base64,' .  base64_encode($tempinfo['filecontent']);
-                $data['image'] = $imagedata;
-                $data['format'] = $tempinfo['filemimetype'];
-                $data['fileid'] = $tempinfo['fileid'];
-                $data['filename'] = $tempinfo['filename'];
-                $data['filepath'] = $tempinfo['filepath'];
-                $data['filesize'] = $tempinfo['filesize'];
-                $data['imagestorage'] = 'intern';
-            } else if (!str_contains($CFG->wwwroot, $url[0])) {
-                $data['imagestorage'] = 'extern';
-                $data['format'] = $format[0];
-                $imgcontent = @file_get_contents($url[0]);
-                if ($imgcontent) {
-                    $data['image'] = 'data:image/' . $format[0] . ";base64," . base64_encode($imgcontent);
-                } else {
-                    throw new Exception(get_string('error:findimage', 'pdfworkspace', $encodedurl));
-                }
-            } else {
-                throw new Exception(get_string('error:findimage', 'pdfworkspace', $encodedurl));
-            }
-            preg_match('/height=[0-9]+/', $imgstr, $height);
-            if ($height) {
-                $data['imageheight'] = str_replace("\"", "", explode('=', $height[0])[1]);
-            } else if (!$height && $data['imagestorage'] === 'extern') {
-                $imagemetadata = getimagesize($url[0]);
-                $data['imageheight'] = $imagemetadata[1];
-            } else {
-                throw new Exception(get_string('error:getimageheight', 'pdfworkspace', $encodedurl));
-            }
-            preg_match('/width=[0-9]+/', $imgstr, $width);
-            if ($width) {
-                $data['imagewidth'] = str_replace("\"", "", explode('=', $width[0])[1]);
-            } else if (!$width && $data['imagestorage'] === 'extern') {
-                $imagemetadata = getimagesize($url[0]);
-                $data['imagewidth'] = $imagemetadata[0];
-            } else {
-                throw new Exception(get_string('error:getimagewidth', 'pdfworkspace', $encodedurl));
-            }
-        } catch (Exception $ex) {
-            $data['image'] = "error";
-            $data['message'] = $ex->getMessage();
-        } finally {
-            $res[] = $firststr;
-            $res[] = $data;
-            $content = $laststr;
-        }
-
-    }
-    $res[] = $content;
-
-    return $res;
+function pdfworkspace_split_content_image($content, $res, $itemid, $context = null) {
+    return array_merge($res, \mod_pdfworkspace\local\print_images::split(
+        (string)$content, (int)$itemid, $context));
 }
 
 function pdfworkspace_data_preprocessing($context, $textarea, $draftitemid = 0) {
@@ -451,7 +339,7 @@ function pdfworkspace_get_annotationtype_name($typeid) {
 
 function pdfworkspace_handle_latex($context, string $subject) {
     global $CFG;
-    $latexapi = get_config('mod_pdfworkspace', 'latexapi');
+
 
     // Look for these formulae: $$ ... $$, \( ... \) and \[ ... \]
     // !!! keep indentation!
@@ -504,11 +392,7 @@ SIGN;
         $match[0] = $string;
 
         $result[] = trim(substr($subject, $textstart, $formulaoffset - $textstart));
-        if ($latexapi == LATEX_TO_PNG_GOOGLE_API) {
-            $result[] = pdfworkspace_process_latex_google($match[0]);
-        } else {
-            $result[] = pdfworkspace_process_latex_moodle($context, $match[0]);
-        }
+        $result[] = pdfworkspace_process_latex_moodle($context, $match[0]);
         $textstart = $formulaoffset + $formulalength;
     }
     if ($textstart != strlen($subject) - 1) {
@@ -530,7 +414,7 @@ function pdfworkspace_process_latex_moodle($context, $string) {
         return false;
     }
     $imagedata = file_get_contents($image);
-    $result['mathform'] = IMAGE_PREFIX . base64_encode($imagedata);
+    $result['mathform'] = PDFWORKSPACE_IMAGE_PREFIX . base64_encode($imagedata);
     // Imageinfo returns an array with the info of the size of the image. In Parameter 1 there is the height, which is the only
     // thing needed here.
     $imageinfo = getimagesize($image);
@@ -538,41 +422,6 @@ function pdfworkspace_process_latex_moodle($context, $string) {
     $result['format'] = 'PNG';
     return $result;
 }
-/**
- * Function takes a latex code string, modifies and url encodes it for the Google Api to process,
- * and returns the resulting image along with its height
- *
- * @param type $string
- * @return type
- */
-function pdfworkspace_process_latex_google(string $string) {
-
-    $length = strlen($string);
-    $im = null;
-    if ($length <= 200) { // Google API constraint XXX find better alternative if possible.
-        $latexdata = urlencode($string);
-        $requesturl = LATEX_TO_PNG_REQUEST . $latexdata;
-        $im = @file_get_contents($requesturl); // '@' suppresses warnings so that one failed google request doesn't prevent the pdf from being printed,
-        // but just the one formula from being presented as a picture.
-    }
-    if ($im != null) {
-        $array = [];
-        try {
-            list($width, $height) = getimagesize($requesturl); // XXX alternative: acess height by decoding the string (saving the extra server request)?
-            if ($height != null) {
-                $imagedata = IMAGE_PREFIX . base64_encode($im); // Image.
-                $array['image'] = $imagedata;
-                $array['imageheight'] = $height;
-                return $array;
-            }
-        } catch (Exception $ex) {
-            return $string;
-        }
-    } else {
-        return $string;
-    }
-}
-
 function pdfworkspace_send_forward_message($recipients, $messageparams, $course, $cm, $context) {
     $name = 'forwardedquestion';
     $text = new stdClass();
@@ -1208,8 +1057,7 @@ function pdfworkspace_prepare_overviewpage($cmid, $myrenderer, $taburl, $action,
     $strings = $stringman->load_component_strings('pdfworkspace', 'en'); // Method gets the strings of the language files.
     $PAGE->requires->strings_for_js(array_keys($strings), 'pdfworkspace'); // Method to use the language-strings in javascript.
     // 1.3 Add the javascript file that determines the dynamic behaviour of the page.
-    $PAGE->requires->js(new moodle_url("/mod/pdfworkspace/shared/overview.js?ver=00005"));
-    $PAGE->requires->js_init_call('startOverview', [], true);
+    $PAGE->requires->js_call_amd('mod_pdfworkspace/overview', 'init');
 }
 
 /** Persistent, permission-aware links within the Overview tab. */
@@ -1235,6 +1083,7 @@ function pdfworkspace_render_overview_navigation($cmid, $context, $active) {
             html_writer::tag('i', '', ['class' => 'fa ' . $icon, 'aria-hidden' => 'true']) .
             html_writer::tag('span', get_string($label, 'pdfworkspace')), $attributes);
     }
+    $html .= \mod_pdfworkspace\local\admin_help::icon('activityoverview');
     return $html . html_writer::end_tag('nav');
 }
 
@@ -1335,9 +1184,13 @@ function pdfworkspace_require_statistics_access($context) {
 
 /** Labelled select using Moodle/Bootstrap form styling. */
 function pdfworkspace_overview_select($name, $label, $options, $selected) {
+    global $OUTPUT;
     $id = 'pdfworkspace-filter-' . $name;
-    $html = html_writer::start_tag('label', ['for' => $id, 'class' => 'pdfworkspace-filter-field']);
-    $html .= html_writer::tag('span', $label);
+    $helpkey = $name === 'itemsperpage' ? 'overviewfiltersize'
+        : ($name === 'documentfilter' ? 'overviewfilterdocument' : 'overviewfilterstatus');
+    $html = html_writer::start_div('pdfworkspace-filter-field');
+    $html .= html_writer::div(html_writer::tag('label', $label, ['for' => $id, 'class' => 'm-0'])
+        . $OUTPUT->help_icon($helpkey, 'pdfworkspace'), 'd-flex align-items-center justify-content-between');
     $html .= html_writer::start_tag('select', ['id' => $id, 'name' => $name, 'class' => 'form-select']);
     foreach ($options as $value => $text) {
         $attributes = ['value' => $value];
@@ -1346,7 +1199,7 @@ function pdfworkspace_overview_select($name, $label, $options, $selected) {
         }
         $html .= html_writer::tag('option', s($text), $attributes);
     }
-    return $html . html_writer::end_tag('select') . html_writer::end_tag('label');
+    return $html . html_writer::end_tag('select') . html_writer::end_div();
 }
 
 /**

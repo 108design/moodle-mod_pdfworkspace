@@ -4,7 +4,7 @@
      SPDX-License-Identifier: GPL-3.0-or-later. -->
 <libraries>
     <library>
-        <location>shared/index.js</location>
+        <location>amd/src/viewer.js</location>
         <name>index.js</name>
         <version></version>
         <license>MIT</license>
@@ -19,7 +19,7 @@
         <licenseversion>2.0</licenseversion>
     </library>
     <library>
-        <location>shared/textclipper.js</location>
+        <location>amd/src/textclipper.js</location>
         <name>textclipper.js</name>
         <version></version>
         <license>MIT</license>

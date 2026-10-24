@@ -272,7 +272,7 @@ if ($action === 'create') {
             $data['height'] = $annotation['height'];
             $data['size'] = $annotation['size'];
             $data['color'] = $annotation['color'];
-            $data['content'] = $annotation['content'];
+            $data['content'] = \mod_pdfworkspace\local\comment_content::textbox($annotation['content']);
             break;
     }
     $insertiondata = json_encode($data);
@@ -354,7 +354,7 @@ if ($action === 'update') {
                 $newdata['height'] = $annotation['height'];
                 $newdata['size'] = $annotation['size'];
                 $newdata['color'] = $annotation['color'];
-                $newdata['content'] = $annotation['content'];
+                $newdata['content'] = \mod_pdfworkspace\local\comment_content::textbox($annotation['content']);
                 break;
         }
 

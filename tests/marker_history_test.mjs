@@ -10,7 +10,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../shared/index.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const source = readFileSync(new URL('../amd/src/viewer.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const start = source.indexOf('annotationHistory = (function () {');
 const end = source.indexOf('\n\n                // Render stuff', start);
 assert.ok(start >= 0 && end > start);

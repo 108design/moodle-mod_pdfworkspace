@@ -73,6 +73,7 @@ class pdfworkspace_comment {
         $datarecord->pdfworkspaceid = $documentid;
         $datarecord->annotationid = $annotationid;
         $datarecord->userid = $USER->id;
+        $content = \mod_pdfworkspace\local\comment_content::clean($content);
         $datarecord->content = $content;
         $datarecord->timecreated = time(); // Moodle method: DateTime::getTimestamp();.
         $datarecord->timemodified = $datarecord->timecreated;
@@ -89,14 +90,14 @@ class pdfworkspace_comment {
 
         $text = file_save_draft_area_files($draftitemid, $context->id, "mod_pdfworkspace", "post",  $commentuuid, $options, $datarecord->content, true);
 
-        $datarecord->content = $text;
+        $datarecord->content = \mod_pdfworkspace\local\comment_content::clean($text);
         $DB->update_record('pdfworkspace_comments', $datarecord);
 
         $datarecord->uuid = $commentuuid;
         self::set_username($datarecord);
         
-        $datarecord->displaycontent = pdfworkspace_get_relativelink($datarecord->content, $datarecord->id, $context);
-        $datarecord->displaycontent = format_text($datarecord->displaycontent, FORMAT_MOODLE, ['para' => false, 'filter' => true]);
+        $datarecord->displaycontent = \mod_pdfworkspace\local\comment_content::format(
+            $datarecord->content, (int)$datarecord->id, $context);
         $datarecord->timecreated = pdfworkspace_optional_timeago($datarecord->timecreated);
         $datarecord->timemodified = pdfworkspace_optional_timeago($datarecord->timemodified);
         $datarecord->usevotes = pdfworkspace_instance::use_votes($documentid);
@@ -223,13 +224,8 @@ class pdfworkspace_comment {
             $comment->isdeleted = $data->isdeleted;
             $comment->uuid = $data->id;
             $comment->ishidden = $data->ishidden ? 1 : 0;
-            if ($data->isdeleted) {
-                $comment->displaycontent = get_string('deletedComment', 'pdfworkspace');
-            } else {
-                $comment->content = $data->content;
-                $comment->displaycontent = pdfworkspace_get_relativelink($comment->content, $comment->uuid, $context);
-                $comment->displaycontent = format_text($comment->displaycontent, FORMAT_MOODLE, ['para' => false, 'filter' => true]);
-            }
+            $comment->content = \mod_pdfworkspace\local\comment_content::question($data, $context);
+            $comment->displaycontent = $comment->content;
 
             self::set_username($comment);
             $comment->solved = $data->solved;
@@ -433,6 +429,7 @@ class pdfworkspace_comment {
 
     public static function update($commentid, $content, $editanypost, $context) {
         global $DB, $USER;
+        $content = \mod_pdfworkspace\local\comment_content::clean($content);
         $comment = $DB->get_record('pdfworkspace_comments', ['id' => $commentid]);
         if ($comment && ( $comment->userid == $USER->id || $editanypost) && $comment->isdeleted == 0) {
             $comment->content = $content;
@@ -446,15 +443,15 @@ class pdfworkspace_comment {
 
             $text = file_save_draft_area_files($draftitemid, $context->id, "mod_pdfworkspace", "post",  $commentid, $options, $content, true);
 
-            $comment->content = $text;
+            $comment->content = \mod_pdfworkspace\local\comment_content::clean($text);
             $success = $DB->update_record('pdfworkspace_comments', $comment);
         } else {
             $success = false;
         }
 
         if ($success) {
-            $content = pdfworkspace_get_relativelink($comment->content, $comment->id, $context);
-            $content = format_text($content, $format = FORMAT_MOODLE, $options = ['para' => false, 'filter' => true]);
+            $content = \mod_pdfworkspace\local\comment_content::format(
+                $comment->content, (int)$comment->id, $context);
             $result = array('status' => 'success', 'timemodified' => $time, 'newContent' => $content);
             if ($comment->userid != $USER->id) {
                 $result['modifiedby'] = pdfworkspace_get_username($USER->id);
@@ -615,7 +612,6 @@ class pdfworkspace_comment {
 
     public static function get_questions($documentid, $pagenumber, $context, $pdfdocid) {
         global $DB, $USER;
-        $displayhidden = has_capability('mod/pdfworkspace:seehiddencomments', $context);
         // Keep the annotation audience separate from legacy comment visibility for the sidebar filter.
         $sql = "SELECT c.*, a.audience AS annotationaudience FROM {pdfworkspace_comments} c "
                 . "JOIN {pdfworkspace_annotations} a ON a.id = c.annotationid "
@@ -634,13 +630,7 @@ class pdfworkspace_comment {
             $question->answercount = pdfworkspace_count_answers($question->annotationid, $context);
             $question->page = $pagenumber;
 
-            if ($question->isdeleted == 1) {
-                $question->content = '<em>'.get_string('deletedComment', 'pdfworkspace').'</em>';
-            }
-            if ($question->ishidden == 1 && !$displayhidden) {
-                $question->content = get_string('hiddenComment', 'pdfworkspace');
-            }
-            $question->content = pdfworkspace_get_relativelink($question->content, $question->id, $context);
+            $question->content = \mod_pdfworkspace\local\comment_content::question($question, $context);
             $ret[] = $question;
         }
 
@@ -661,7 +651,7 @@ class pdfworkspace_comment {
             if ( !pdfworkspace_can_see_comment($question, $context) ) {
                 continue;
             }
-            $question->content = pdfworkspace_get_relativelink($question->content, $question->id, $context);
+            $question->content = \mod_pdfworkspace\local\comment_content::question($question, $context);
             $ret[$question->page][] = $question;
         }
         return $ret;
@@ -676,7 +666,6 @@ class pdfworkspace_comment {
         global $DB;
         $ret = [];
         $i = 0;
-        $displayhidden = has_capability('mod/pdfworkspace:seehiddencomments', $context);
         $sql = "SELECT c.*, a.page, a.audience AS annotationaudience FROM {pdfworkspace_comments} c "
                 . "JOIN {pdfworkspace_annotations} a ON a.id = c.annotationid "
                   . "WHERE isquestion = 1 AND c.pdfworkspaceid = :docid AND a.documentid = :pdfdocid AND "
@@ -694,13 +683,7 @@ class pdfworkspace_comment {
             }
 
             $question->answercount = pdfworkspace_count_answers($question->annotationid, $context);
-            if ($question->isdeleted == 1) {
-                $question->content = '<em>'.get_string('deletedComment', 'pdfworkspace').'</em>';
-            }
-            if ($question->ishidden == 1 && !$displayhidden) {
-                $question->content = get_string('hiddenComment', 'pdfworkspace');
-            }
-            $question->content = pdfworkspace_get_relativelink($question->content, $question->id, $context);
+            $question->content = \mod_pdfworkspace\local\comment_content::question($question, $context);
             $ret[$i] = $question;   // Without this array the order by page would get lost, because js sorts by id.
             $i++;
         }

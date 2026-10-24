@@ -612,3 +612,46 @@ $string['adminhelp_overview'] = 'Site-wide settings';
 $string['adminhelp_overview_article'] = '<p>Manage site-wide PDF Workspace settings here. Documents, audiences and permitted download variants are also configured in each activity.</p><p>Check changes in a suitable test activity. Display defaults do not rewrite existing comments or their audiences.</p>';
 $string['adminhelp_exports'] = 'Setting up PDF export';
 $string['adminhelp_exports_article'] = '<p>Combined PDF exports require a suitable Python environment on the server. Enter the configured interpreter path and follow the plugin\'s installation instructions.</p><p>Availability of each download variant still depends on activity settings and permissions. Use your own sample documents for testing.</p>';
+
+$string['invaliddocument'] = 'The PDF document could not be found or read.';
+$string['clicktodownload'] = 'Download the PDF: {$a}';
+$string['page-mod-pdfworkspace-x'] = 'Any PDF Workspace activity page';
+$string['adminhelp_overview_help'] = 'These settings define site-wide defaults. Review the options in each activity for its audience and allowed tools.';
+$string['adminhelp_exports_help'] = 'PDF downloads depend on the activity settings. Combined exports also need the configured Python environment; formulas use the local Moodle TeX renderer.';
+
+$string['activityhelp'] = 'PDF Workspace help';
+$string['adminhelp_courseoverview'] = 'PDF activities in this course';
+$string['adminhelp_courseoverview_help'] = 'Open a PDF activity from this list. Availability and editing actions follow your course permissions.';
+$string['adminhelp_courseoverview_article'] = '<p>This overview lists the PDF Workspace activities available to you in this course, together with their descriptions and recent changes. Select an activity name to open its documents and discussions.</p><p>Editing and visibility controls appear only where your role allows them. Document downloads and annotation tools are configured separately for each activity.</p>';
+
+
+$string['adminhelp_viewer'] = 'Reading and marking PDFs';
+$string['adminhelp_viewer_help'] = 'Use the cursor to navigate, or choose a pin, rectangle, text, pen or marker where your role and the activity allow it.';
+$string['adminhelp_viewer_article'] = '<p>Select a document tab, then use zoom and page controls to read the PDF. Fullscreen enlarges the workspace; Escape returns to the page and its previous focus.</p><p>Pins and rectangles can have a discussion. Text, pen and marker tools depend on the activity settings and your permissions. Hold Shift for a straight pen or marker line. Undo and redo cover up to 20 of your own recent drawings and textboxes in this tab.</p>';
+
+$string['adminhelp_discussion'] = 'Comments and audiences';
+$string['adminhelp_discussion_help'] = 'Check the audience before posting. Replies retain the audience of their marking; personal notes are visible only to you.';
+$string['adminhelp_discussion_article'] = '<p>Click a marking to read or write its discussion. Before sending a comment, check the selected audience. Available audiences follow the activity settings and your role; replies keep the marking audience.</p><p>Use the question filters and search to find discussions. The personal audience is visible only to its author. Teacher audiences include the author and permitted staff. A selected-participant audience is visible only to its author and recipient. A hidden comment is governed by the separate moderation permissions.</p>';
+
+$string['adminhelp_downloads'] = 'Downloading PDFs';
+$string['adminhelp_downloads_help'] = 'The download menu lists the variants available for your role and this activity. Workspace downloads use the selected documents and saved export order.';
+$string['adminhelp_downloads_article'] = '<p>The download menu offers the original document, comments and combined variants where settings and permissions allow them. Exports include only markings and comments you may see. Content already present in the original PDFs is retained.</p><p>Workspace downloads use the documents and export order saved in the activity settings, independently of the viewer tabs. Combined exports need the configured local Python tools; formulas use the local Moodle TeX renderer.</p>';
+
+$string['adminhelp_moderation'] = 'Moderating discussions';
+$string['adminhelp_moderation_help'] = 'Use the report overview and moderation actions according to your role. Hiding and deleting comments have different consequences.';
+$string['adminhelp_moderation_article'] = '<p>Reported comments appear in the report overview where your role permits it. Review the discussion before acting. Hiding a comment restricts its display under the moderation policy; deleting removes it through the plugin workflow.</p><p>Course staff may see additional restricted discussions only where their permissions allow it. Personal notes remain personal. Moderation controls do not change the audience of existing threads.</p>';
+
+$string['adminhelp_activityoverview'] = 'Finding discussions in the overview';
+$string['adminhelp_activityoverview_help'] = 'Use the overview tabs, status and document filters, then select Apply. Each result opens its marking in the PDF.';
+$string['adminhelp_activityoverview_article'] = '<p>Questions, your posts and any other tabs available to your role show discussions you may see. Status filters vary by tab. The document filter appears for activities with several PDFs; entries per page controls pagination.</p><p>Select Apply to use the filters or Reset to restore the default view. Sortable column headings change the order. Select a document or comment preview to open the matching PDF page and discussion.</p>';
+$string['adminhelp_activitysettings'] = 'Configuring this activity';
+$string['adminhelp_activitysettings_help'] = 'Choose documents, audiences, tools and downloads here. A PDF with existing markings cannot be replaced or removed.';
+$string['adminhelp_activitysettings_article'] = '<p>Add PDFs and save the activity before changing their inclusion and order in workspace exports. Use the row controls to choose the export order; viewer tabs keep their own order. PDFs with existing markings are locked against replacement and removal.</p><p>Allowed audiences and the default audience apply to new markings. They do not rewrite existing discussions. Enable the required tools and download variants for participants; permissions also control access.</p>';
+$string['overviewfilterstatus'] = 'Status filter';
+$string['overviewfilterstatus_help'] = 'Choose the status or subscription view for this tab, then select Apply.';
+$string['overviewfilterdocument'] = 'Document filter';
+$string['overviewfilterdocument_help'] = 'Limit results to one PDF, then select Apply.';
+$string['overviewfiltersize'] = 'Entries per page';
+$string['overviewfiltersize_help'] = 'Choose how many results appear on one page, then select Apply.';
+$string['audiencedefault_student_help'] = 'Preselect an allowed audience for new participant markings. Existing markings and replies keep their audience.';
+$string['audiencedefault_staff_help'] = 'Preselect an allowed audience for new staff markings. Existing markings and replies keep their audience.';

@@ -35,11 +35,12 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
     public function definition() {
 
         global $CFG, $USER, $COURSE, $DB, $PAGE;
+        \mod_pdfworkspace\local\admin_help::register_activity_settings();
         $mform =& $this->_form;
         $config = get_config('mod_pdfworkspace');
         $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026100200-2']));
-        $PAGE->requires->js(new moodle_url('/mod/pdfworkspace/shared/document-settings.js', ['v' => '2026100200-1']));
-        $PAGE->requires->js(new moodle_url('/mod/pdfworkspace/shared/tooltips.js', ['v' => '2026092912']));
+        $PAGE->requires->js_call_amd('mod_pdfworkspace/document_settings', 'init');
+        $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
         $mform->setType('general', PARAM_TEXT);
@@ -147,6 +148,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         ];
         foreach ($audienceoptions as $name => $default) {
             $mform->addElement('advcheckbox', $name, get_string($name, 'pdfworkspace'), null, null, [0, 1]);
+            $mform->addHelpButton($name, 'audiencepermissions', 'pdfworkspace');
             $mform->setType($name, PARAM_BOOL);
             $mform->setDefault($name, $default);
         }
@@ -156,6 +158,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 'protected' => get_string('audience_student_protected', 'pdfworkspace'),
                 'public' => get_string('audience_student_public', 'pdfworkspace'),
             ]);
+        $mform->addHelpButton('studentdefaultaudience', 'audiencedefault_student', 'pdfworkspace');
         $mform->setType('studentdefaultaudience', PARAM_ALPHA);
         $mform->setDefault('studentdefaultaudience', 'protected');
         $mform->addElement('select', 'staffdefaultaudience',
@@ -164,6 +167,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 'targeted' => get_string('audience_staff_targeted', 'pdfworkspace'),
                 'public' => get_string('audience_staff_public', 'pdfworkspace'),
             ]);
+        $mform->addHelpButton('staffdefaultaudience', 'audiencedefault_staff', 'pdfworkspace');
         $mform->setType('staffdefaultaudience', PARAM_ALPHA);
         $mform->setDefault('staffdefaultaudience', 'private');
 
@@ -213,6 +217,13 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             $mform->setType($setting, PARAM_BOOL);
             $mform->setDefault($setting, 0);
             $mform->addHelpButton($setting, 'setting_' . $setting, 'pdfworkspace');
+        }
+
+        foreach (['files' => 'activitysettings', 'studentdefaultaudience' => 'discussion',
+                'staffdefaultaudience' => 'discussion', 'usecombineddownload' => 'downloads',
+                'useworkspacedownload' => 'downloads', 'useworkspacecomments' => 'downloads'] as $field => $topic) {
+            $mform->addElement('static', 'help_' . $field, '',
+                \mod_pdfworkspace\local\admin_help::field_icon($field, $topic));
         }
 
         // Add legacy files flag only if used.

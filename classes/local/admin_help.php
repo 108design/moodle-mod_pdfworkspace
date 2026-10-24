@@ -1,4 +1,26 @@
 <?php
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for classes/local/admin_help.php.
+ *
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 // Copyright (C) 2026 Andreas Giesen. See LICENSE.
 namespace mod_pdfworkspace\local;
 
@@ -6,19 +28,60 @@ defined('MOODLE_INTERNAL') || die();
 
 /** Contextual settings help, following the standalone Frontpage panel contract. */
 final class admin_help {
-    private const TOPICS = ['overview', 'exports'];
+    private const TOPICS = ['overview', 'exports', 'courseoverview', 'viewer', 'downloads', 'discussion', 'moderation', 'activityoverview', 'activitysettings'];
+    private static array $topics = ['overview', 'exports'];
+    private static string $titlekey = 'adminhelp';
     private static bool $prepared = false;
+    private static bool $activitysettings = false;
+
+    /** Called only by this activity's native edit form. */
+    public static function register_activity_settings(): void {
+        self::$activitysettings = true;
+    }
+
+    /** Place an exact-topic icon beside its named native form control. */
+    public static function field_icon(string $field, string $topic): string {
+        return \html_writer::span(self::icon($topic), '', ['data-pdfworkspace-help-field' => $field]);
+    }
 
     /** Register only the permitted settings page before its header is rendered. */
     public static function prepare(\core\hook\output\before_http_headers $hook): void {
         global $CFG, $PAGE;
-        if (self::$prepared || admin_branding::page_capability() === null) {
+        if (self::$prepared) {
             return;
         }
+        // The native course-index controller has already enforced course login.
+        $courseindex = (int)$PAGE->context->contextlevel === CONTEXT_COURSE
+            && $PAGE->url->get_path() === (new \moodle_url('/mod/pdfworkspace/index.php'))->get_path();
+        $activityview = (int)$PAGE->context->contextlevel === CONTEXT_MODULE
+            && $PAGE->url->get_path() === (new \moodle_url('/mod/pdfworkspace/view.php'))->get_path()
+            && has_capability('mod/pdfworkspace:view', $PAGE->context);
+        $activitysettings = self::$activitysettings
+            && $PAGE->url->get_path() === (new \moodle_url('/course/modedit.php'))->get_path()
+            && has_capability('moodle/course:manageactivities', $PAGE->context);
+        if (!$courseindex && !$activityview && !$activitysettings && admin_branding::page_capability() === null) {
+            return;
+        }
+        self::$topics = $courseindex ? ['courseoverview'] : ['overview', 'exports'];
+        if ($activityview) {
+            self::$topics = ['viewer', 'activityoverview', 'discussion', 'downloads'];
+            if (str_starts_with(optional_param('action', '', PARAM_ALPHA), 'overview')) {
+                self::$topics = ['activityoverview', 'viewer', 'discussion', 'downloads'];
+            }
+            if (has_any_capability(['mod/pdfworkspace:deleteany', 'mod/pdfworkspace:hidecomments',
+                    'mod/pdfworkspace:viewreports'], $PAGE->context)) {
+                self::$topics[] = 'moderation';
+            }
+        }
+        if ($activitysettings) {
+            self::$topics = ['activitysettings', 'discussion', 'downloads'];
+        }
+        self::$titlekey = $courseindex || $activityview || $activitysettings ? 'activityhelp' : 'adminhelp';
         $PAGE->add_body_class('mod-pdfworkspace-admin-help-page');
         self::$prepared = true;
         $PAGE->requires->css(new \moodle_url('/mod/pdfworkspace/styles/admin_help.css', [
             'rev' => get_config('mod_pdfworkspace', 'version'),
+            'theme' => theme_get_revision(),
         ]));
         $module = (int)$CFG->version < 2025041400 ? 'admin_help_legacy' : 'admin_help';
         $PAGE->requires->js_call_amd('mod_pdfworkspace/admin_help_form', 'init');
@@ -30,12 +93,21 @@ final class admin_help {
     /** Native popover with concise guidance and a direct link to the extended topic. */
     public static function icon(string $key): string {
         global $CFG, $PAGE;
+        if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+            return '';
+        }
         if (!in_array($key, self::TOPICS, true)) {
             throw new \coding_exception('Unknown Administration help topic.');
         }
         $url = new \moodle_url($PAGE->url);
+        if ($PAGE->url->get_path() === (new \moodle_url('/mod/pdfworkspace/view.php'))->get_path()) {
+            $action = optional_param('action', '', PARAM_ALPHA);
+            if ($action !== '') {
+                $url->param('action', $action);
+            }
+        }
         $url->param('pdfworkspacehelp', $key);
-        $help = new \help_icon($key, 'mod_pdfworkspace', $url->out(false));
+        $help = new \help_icon('adminhelp_' . $key, 'mod_pdfworkspace', $url->out(false));
         $renderer = $PAGE->get_renderer('core');
         $data = (array)$help->export_for_template($renderer);
         $data['completedoclink'] = \html_writer::link($url, get_string('adminhelpmore', 'mod_pdfworkspace'));
@@ -50,7 +122,7 @@ final class admin_help {
         if (!self::$prepared) {
             return '';
         }
-        $label = get_string('adminhelp', 'mod_pdfworkspace');
+        $label = get_string(self::$titlekey, 'mod_pdfworkspace');
         return \html_writer::tag('button', $renderer->pix_icon(
             (int)$CFG->version < 2026100500 ? 'i/info' : 'i/circleinfo', ''), [
                 'type' => 'button', 'class' => 'nav-link icon-no-margin mod-pdfworkspace-help-navbar',
@@ -65,14 +137,14 @@ final class admin_help {
         if (!self::$prepared) {
             return '';
         }
-        $title = get_string('adminhelp', 'mod_pdfworkspace');
+        $title = get_string(self::$titlekey, 'mod_pdfworkspace');
         $close = \html_writer::tag('button', \html_writer::span('&#215;', '', ['aria-hidden' => 'true']), [
             'type' => 'button', 'class' => 'btn btn-secondary btn-sm mod-pdfworkspace-help-close',
             'aria-label' => get_string('closebuttontitle', 'moodle'), 'data-pdfworkspace-help-close' => '1',
         ]);
         $options = '';
         $articles = '';
-        foreach (self::TOPICS as $topic) {
+        foreach (self::$topics as $topic) {
             $label = get_string('adminhelp_' . $topic, 'mod_pdfworkspace');
             $options .= \html_writer::tag('option', $label, ['value' => $topic]);
             $articles .= \html_writer::tag('article', \html_writer::tag('h3', $label, ['class' => 'h5', 'tabindex' => '-1'])

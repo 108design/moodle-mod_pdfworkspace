@@ -161,9 +161,10 @@ class pdfworkspace_instance {
             if ($question->ishidden && !$seehidden) {
                 $question->answeredquestion = get_string('hiddenComment', 'pdfworkspace');
             }
-            $question->answeredquestion = html_entity_decode($question->answeredquestion);
+
             $question->timemodified = pdfworkspace_get_user_datetime($question->timemodified);
-            $question->answeredquestion = pdfworkspace_get_relativelink($question->answeredquestion, $question->id, $context);
+            $question->answeredquestion = \mod_pdfworkspace\local\comment_content::format(
+                $question->answeredquestion, (int)$question->id, $context);
             if ($question->visibility === 'anonymous') {
                 $question->author = get_string('anonymous', 'pdfworkspace');
             } else {
@@ -187,8 +188,8 @@ class pdfworkspace_instance {
                 if ($answer->ishidden && !$seehidden) {
                     $answer->answer = get_string('hiddenComment', 'pdfworkspace');
                 }
-                $answer->answer = pdfworkspace_get_relativelink($answer->answer, $answer->id, $context);
-                $answer->answer = html_entity_decode($answer->answer);
+                $answer->answer = \mod_pdfworkspace\local\comment_content::format(
+                    $answer->answer, (int)$answer->id, $context);
                 $answer->timemodified = pdfworkspace_get_user_datetime($answer->timemodified);
                 if ($answer->visibility === 'anonymous') {
                     $answer->author = get_string('anonymous', 'pdfworkspace');

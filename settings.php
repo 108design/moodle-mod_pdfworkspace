@@ -26,37 +26,29 @@ defined('MOODLE_INTERNAL') || die; // Prevents crashes on misconfigured producti
 if ($ADMIN->fulltree) {
     require_once('constants.php');
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/usevotes',
-            get_string('global_setting_usevotes', 'pdfworkspace'), get_string('global_setting_usevotes_desc', 'pdfworkspace'), 1));
+            get_string('global_setting_usevotes', 'pdfworkspace'), get_string('global_setting_usevotes_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview'), 1));
 
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/useprint',
-            get_string('global_setting_useprint', 'pdfworkspace'), get_string('global_setting_useprint_desc', 'pdfworkspace'), 0));
+            get_string('global_setting_useprint', 'pdfworkspace'), get_string('global_setting_useprint_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('exports'), 0));
 
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/useprintcomments',
             get_string('global_setting_useprint_comments', 'pdfworkspace'),
-        get_string('global_setting_useprint_comments_desc', 'pdfworkspace'), 0));
+        get_string('global_setting_useprint_comments_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('exports'), 0));
 
     $settings->add(new admin_setting_configtext('mod_pdfworkspace/exportpython',
         get_string('combinedexportpython', 'pdfworkspace'),
-        get_string('combinedexportpython_desc', 'pdfworkspace'), '', PARAM_RAW_TRIMMED));
+        get_string('combinedexportpython_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('exports'), '', PARAM_RAW_TRIMMED));
 
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/use_studenttextbox',
             get_string('global_setting_use_studenttextbox', 'pdfworkspace'),
-            get_string('global_setting_use_studenttextbox_desc', 'pdfworkspace'), 0));
+            get_string('global_setting_use_studenttextbox_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview'), 0));
 
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/use_studentdrawing',
             get_string('global_setting_use_studentdrawing', 'pdfworkspace'),
-            get_string('global_setting_use_studentdrawing_desc', 'pdfworkspace'), 0));
+            get_string('global_setting_use_studentdrawing_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview'), 0));
 
-    // Define what API to use for converting latex formulas into png.
-    $options = array();
-    $options[LATEX_TO_PNG_MOODLE] = get_string("global_setting_latexusemoodle", "pdfworkspace");
-    $options[LATEX_TO_PNG_GOOGLE_API] = get_string("global_setting_latexusegoogle", "pdfworkspace");
-    $settings->add(new admin_setting_configselect('mod_pdfworkspace/latexapi', get_string('global_setting_latexapisetting',
-        'pdfworkspace'),
-        get_string('global_setting_latexapisetting_desc', 'pdfworkspace'), LATEX_TO_PNG_MOODLE, $options));
-    
     $name = new lang_string('global_setting_attobuttons', 'pdfworkspace');
-    $desc = new lang_string('global_setting_attobuttons_desc', 'pdfworkspace');
+    $desc = get_string('global_setting_attobuttons_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview');
     $default = 'collapse = collapse
 style1 = bold, italic, underline
 list = unorderedlist, orderedlist
@@ -74,7 +66,7 @@ screen = fullscreen';
     if (isset($CFG->maxbytes)) {
 
         $name = new lang_string('maximumfilesize', 'pdfworkspace');
-        $description = new lang_string('configmaxbytes', 'pdfworkspace');
+        $description = get_string('configmaxbytes', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview');
     
         $maxbytes = get_config('mod_pdfworkspace', 'maxbytes');
         $element = new admin_setting_configselect('mod_pdfworkspace/maxbytes',

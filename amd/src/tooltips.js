@@ -1,3 +1,25 @@
+/**
+ * This file is part of Moodle - https://moodle.org/
+ *
+ * Moodle is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Moodle is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * File documentation for amd/src/tooltips.js.
+ *
+ * @package   mod_pdfworkspace
+ * @copyright 2026 Andreas Giesen <andreas@108design.com>
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 /*
  * PDF Workspace tooltip integration.
  * @package   mod_pdfworkspace
@@ -6,10 +28,13 @@
  */
 
 // Convert PDF Workspace title hints to Moodle's Bootstrap tooltips, including dynamic sidebar items.
-(function () {
-    'use strict';
+import Tooltip from 'theme_boost/bootstrap/tooltip';
+import $ from 'jquery';
 
-    require(['theme_boost/index', 'jquery'], function (Bootstrap, $) {
+let initialised = false;
+export const init = () => {
+    if (initialised) return;
+    initialised = true;
         const selector = '#pdfworkspace_index [title], ' +
             '.path-mod-pdfworkspace #region-main table [title], ' +
             '.path-mod-pdfworkspace .pdfworkspace-overview-action[title], ' +
@@ -53,7 +78,7 @@
             }
             if (!entry) {
                 // Moodle, the theme and other plugins may already own a tooltip.
-                if (Bootstrap.Tooltip.getInstance?.(node) || $(node).data('bs.tooltip') ||
+                if (Tooltip.getInstance?.(node) || $(node).data('bs.tooltip') ||
                         node.hasAttribute('data-original-title') || node.hasAttribute('data-bs-original-title')) {
                     return;
                 }
@@ -63,7 +88,7 @@
                 }
                 entry = {
                     title,
-                    instance: new Bootstrap.Tooltip(node, {
+                    instance: new Tooltip(node, {
                         title,
                         container: 'body',
                         placement: 'top',
@@ -147,5 +172,4 @@
             owned.forEach(entry => entry.instance.dispose());
             owned.clear();
         });
-    });
-})();
+};

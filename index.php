@@ -20,8 +20,8 @@
  * @author    Ahmad Obeid
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-//require_once('../../config.php');
-require_once('locallib.php');
+require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/locallib.php');
 
 $id = required_param('id', PARAM_INT);           // Course ID.
 
@@ -58,14 +58,14 @@ $PAGE->set_title($course->shortname.': '.$strpdfworkspaces);
 $PAGE->set_heading($course->fullname);
 $PAGE->navbar->add($strpdfworkspaces);
 echo $OUTPUT->header();
-echo $OUTPUT->heading($strpdfworkspaces);
+echo $OUTPUT->heading($strpdfworkspaces . \mod_pdfworkspace\local\admin_help::icon('courseoverview'));
 
 if (!$pdfworkspaces = get_all_instances_in_course('pdfworkspace', $course)) {
     notice(get_string('thereareno', 'moodle', $strpdfworkspaces), "$CFG->wwwroot/course/view.php?id=$course->id");
     exit;
 }
 
-$usesections = course_format_uses_sections($course->format);
+$usesections = course_get_format($course)->uses_sections();
 
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_index';
@@ -84,6 +84,9 @@ $currentsection = '';
 
 foreach ($pdfworkspaces as $pdfworkspace) {
     $cm = $modinfo->cms[$pdfworkspace->coursemodule];
+    if (!$cm->uservisible) {
+        continue;
+    }
     $infor = pdfworkspace_get_number_of_new_activities($pdfworkspace->id);
     if ($usesections) {
         $printsection = '';
@@ -138,11 +141,15 @@ foreach ($pdfworkspaces as $pdfworkspace) {
     } else if ($lastmodified >= strtotime("-1 day")) {
             $newinfo = "<img src=\"pix/new.gif\"></img>";
     }
-    $table->data[] = array (
-        $printsection,
+    $row = array (
+        $usesections ? $printsection : userdate($lastmodified),
         "<div style=\"float:left\"><a $class $extra href=\"view.php?id=$cm->id\">".$icon.format_string($pdfworkspace->name)
         .$newinfo."</a></div><div style=\"float:right\">".$setting."</div>" , userdate($lastmodified),
         format_module_intro('pdfworkspace', $pdfworkspace, $cm->id));
+    if (!$usesections) {
+        unset($row[2]);
+    }
+    $table->data[] = array_values($row);
 }
 
 echo html_writer::table($table);
