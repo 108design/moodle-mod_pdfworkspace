@@ -1,4 +1,9 @@
-## 1.10.0 - Unreleased
+## 1.11.0 - 2026-10-25
+
+- Remove obsolete language strings for the retired external formula service. Formula export continues to use the local Moodle TeX renderer.
+- Add GitHub Actions checks for Moodle metadata, PHP syntax, plugin PHPUnit tests and viewer JavaScript tests.
+
+## 1.10.0 - 2026-10-25
 
 - Sanitize comment output while retaining Moodle filters, and keep textbox annotations as plain text.
 - Limit print images to owned Moodle files with verified image types; use the local Moodle TeX renderer for formulas.

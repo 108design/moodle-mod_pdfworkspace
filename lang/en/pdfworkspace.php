@@ -182,13 +182,6 @@ $string['global_setting_anonymous'] = 'Allow anonymous posting?';
 $string['global_setting_anonymous_desc'] = 'With this option you allow your user to post comments anonymously. This option activates anonymous posting globally';
 $string['global_setting_attobuttons'] = 'Atto editor toolbar config';
 $string['global_setting_attobuttons_desc'] = 'The list of plugins and the order they are displayed can be configured here. The configuration consists of groups (one per line) followed by the ordered list of plugins for that group. The group is separated from the plugins with an equals sign and the plugins are separated with commas. The group names must be unique and should indicate what the buttons have in common. Button and group names should not be repeated and may only contain alphanumeric characters.';
-$string['global_setting_latexapisetting'] = 'LaTeX to PNG API';
-$string['global_setting_latexapisetting_desc'] = 'API for converting Latex to PNG for PDF Downloads.<br>
-        Note: If you use the Google Chart API, Google will get all formulas in the document if someone chooses to use LaTeX<br>
-        If you use the Moodle API, you need a latex, dvips and convert binary installed on your server.
-        (See  <a href="https://docs.moodle.org/38/en/TeX_notation_filter">Moodle Documentation</a>)';
-$string['global_setting_latexusemoodle'] = 'Internal Moodle API';
-$string['global_setting_latexusegoogle'] = 'Google Chart API';
 $string['global_setting_use_studentdrawing'] = 'Allow drawings for participants?';
 $string['global_setting_use_studentdrawing_desc'] = 'Choose whether participants may draw on PDFs by default. Drawings can have optional comments.';
 $string['global_setting_use_studenttextbox'] = 'Allow textboxes for participants?';
