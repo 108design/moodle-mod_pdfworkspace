@@ -1,0 +1,19 @@
+name: PDF Workspace
+summary: 108design's free GPL Moodle activity brings multiple PDFs, annotations, questions and permission-aware
+  document downloads into one workspace.
+category: Learning activities
+description: |
+  Read, annotate and discuss several PDFs in one Moodle course activity. Each document has its own viewer tab. Participants can draw, highlight, add text, pin or mark areas, and start comment threads with the audiences allowed by the activity settings.
+
+  An overview brings together questions, answers, personal posts and reported comments. Links return to the relevant document and marking. PDFs with existing annotations are protected from replacement or removal so comments keep referring to their original document.
+
+  Downloads can include original PDFs, comments, annotated PDFs and selected workspace documents. Activity settings and capabilities control access; exports include only markings and comments visible to the requesting user. Selected workspace documents can have a download order separate from the viewer tabs.
+
+  Combined PDF and workspace exports require Python 3.11 or later on the Moodle server, the documented Python libraries and permission to run the configured interpreter. These dependencies are installed separately. The normal viewer, original-PDF downloads and comments-only downloads work without Python.
+
+  Maintained by 108design as an independent GPL derivative of PDF Annotator, with original attribution retained. Available free of charge under the GNU GPL v3 or later.
+labels:
+- fully-free
+links:
+  docs: https://github.com/108design/moodle-mod_pdfworkspace/blob/main/README.md
+  issues: https://github.com/108design/moodle-mod_pdfworkspace/issues
