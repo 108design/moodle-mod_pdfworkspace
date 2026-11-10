@@ -83,7 +83,7 @@ class questionstable extends overviewtable {
 
     private $id = 'mod-pdfworkspace-questions';
 
-    public function __construct($url, $showdropdown, $usevotes) {
+    public function __construct($url, $showdropdown, $usevotes, $unanswered = false) {
         parent::__construct($this->id);
         $this->define_baseurl($url);
         $columns = ['col5', 'col0', 'col1'];
@@ -131,6 +131,9 @@ class questionstable extends overviewtable {
         if ($usevotes) {
             $this->sortable(true, 'col2', SORT_DESC);
         }
+        if ($unanswered) {
+            $this->sortable(false);
+        }
     }
 }
 /**
@@ -142,7 +145,7 @@ class answerstable extends overviewtable {
 
     private $id = 'mod-pdfworkspace-answers';
 
-    public function __construct($url) {
+    public function __construct($url, $recent = false) {
         parent::__construct($this->id);
         $this->define_baseurl($url);
         $this->define_columns(array('col4', 'col3', 'col0', 'col2', 'col5'));
@@ -164,6 +167,9 @@ class answerstable extends overviewtable {
         $this->column_class('col2', 'pdfworkspace-col-person');
         $this->column_class('col5', 'pdfworkspace-col-actions');
         $this->no_sorting('col2');
+        if ($recent) {
+            $this->sortable(false);
+        }
     }
 }
 /**

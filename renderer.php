@@ -36,16 +36,6 @@ class mod_pdfworkspace_renderer extends plugin_renderer_base {
         return $this->render_from_template('pdfworkspace/index', $index->export_for_template($this));
     }
     /**
-     *
-     * @param \templatable $statistic
-     * @return type
-     */
-    public function render_statistic(\templatable $statistic) {
-        $data = $statistic->export_for_template($this);
-        return $this->render_from_template('mod_pdfworkspace/statistic', $data);
-    }
-
-    /**
      * Render the actions available for an overview row without a nested menu.
      * @param \templatable $actions Row actions.
      * @return string
@@ -131,9 +121,6 @@ class mod_pdfworkspace_renderer extends plugin_renderer_base {
             $overviewtab,
             $this->pdfworkspace_create_tab($baseurl, 'view', 'document', $pdfworkspacename),
         );
-        if (is_siteadmin()) {
-            $level1[] = $this->pdfworkspace_create_tab($baseurl, 'statistic', 'statistic');
-        }
         return $this->tabtree($level1, $selected, $inactive);
     }
 

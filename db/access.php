@@ -284,28 +284,6 @@ $capabilities = array(
         ),
     ),
 
-    'mod/pdfworkspace:viewstatistics' => array ( // View statistics page.
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'student' => CAP_ALLOW,
-            'manager' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'teacher' => CAP_ALLOW,
-        ),
-    ),
-
-    'mod/pdfworkspace:viewteacherstatistics' => array ( // See additional information on statistics page.
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'teacher' => CAP_ALLOW,
-        ),
-    ),
-
-
     /* ********************** capabilities for viewing the overview page **********************/
 
     // View reports of comments.

@@ -1174,14 +1174,6 @@ function pdfworkspace_overview_person($author, $timestamp) {
         html_writer::tag('div', userdate($timestamp, '%d.%m.%y, %H:%M'), ['class' => 'pdfworkspace-overview-meta']);
 }
 
-/** Statistics are temporarily restricted to actual site administrators. */
-function pdfworkspace_require_statistics_access($context) {
-    require_capability('mod/pdfworkspace:viewstatistics', $context);
-    if (!is_siteadmin()) {
-        throw new required_capability_exception($context, 'mod/pdfworkspace:viewstatistics', 'nopermissions', '');
-    }
-}
-
 /** Labelled select using Moodle/Bootstrap form styling. */
 function pdfworkspace_overview_select($name, $label, $options, $selected) {
     global $OUTPUT;
@@ -1212,20 +1204,24 @@ function pdfworkspace_overview_select($name, $label, $options, $selected) {
  * @return type
  */
 function pdfworkspace_get_questions($activityid, $context, $questionfilter, $documentfilter = 0) {
+    return pdfworkspace_prepare_overview_questions(
+        pdfworkspace_load_overview_questions($activityid, $context, $questionfilter, $documentfilter), $context);
+}
 
+/** Load questions the current user may access, before preparing display text and links. */
+function pdfworkspace_load_overview_questions($activityid, $context, $questionfilter, $documentfilter = 0) {
     global $DB;
 
     $cmid = $context->instanceid;
 
     $sql = "SELECT a.id as annoid, a.page, a.documentid, a.pdfworkspaceid, p.name AS pdfworkspacename, p.usevotes, cm.id AS cmid, c.isquestion, c.annotationid, "
-        . "c.id as commentid, c.content, c.userid, c.visibility, c.timecreated, c.isdeleted, c.ishidden, "
-        . "SUM(vote) AS votes, MAX(answ.timecreated) AS lastanswered "
+        . "c.id as commentid, c.content, c.userid, c.visibility, c.timecreated, c.isdeleted, c.ishidden, c.solved, a.audience, "
+        . "SUM(vote) AS votes "
         . "FROM {pdfworkspace_annotations} a "
         . "JOIN {pdfworkspace_comments} c ON c.annotationid = a.id "
         . "JOIN {pdfworkspace} p ON a.pdfworkspaceid = p.id "
         . "JOIN {course_modules} cm ON p.id = cm.instance "
         . "LEFT JOIN {pdfworkspace_votes} v ON c.id=v.commentid "
-        . "LEFT JOIN {pdfworkspace_comments} answ ON answ.annotationid = a.id "
         . "WHERE c.isquestion = 1 AND p.id = ? AND cm.id = ? ";
     if ($questionfilter == 0) {
         $sql = $sql . ' AND c.solved = 0 ';
@@ -1237,34 +1233,30 @@ function pdfworkspace_get_questions($activityid, $context, $questionfilter, $doc
         $sql .= ' AND a.documentid = ? ';
     }
     $sql = $sql . "GROUP BY a.id, p.name, p.usevotes, cm.id, c.id, c.annotationid, a.page, a.documentid, a.pdfworkspaceid, c.content, c.userid, c.visibility, "
-        . "c.timecreated, c.isdeleted, c.ishidden, c.isquestion ";
+        . "c.timecreated, c.isdeleted, c.ishidden, c.isquestion, c.solved, a.audience";
     $params = [$activityid, $cmid];
     if ($documentfilter) {
         $params[] = $documentfilter;
     }
     $questions = $DB->get_records_sql($sql, $params);
+    return array_filter($questions, static fn($question) => pdfworkspace_can_see_comment($question, $context));
+}
 
+/** Prepare the rows used by the existing questions table. */
+function pdfworkspace_prepare_overview_questions($questions, $context) {
     $seehidden = has_capability('mod/pdfworkspace:seehiddencomments', $context);
     $labelhidden = "<br><span class='tag tag-info'>" . get_string('hiddenfromstudents') . "</span>"; // XXX use moodle method if exists.
-    $labelunavailable = "<br><span class='tag tag-info'>" . get_string('restricted') . "</span>";
 
-    $res = [];
-    foreach ($questions as $key => $question) {
-
-        $entrycontext = context_module::instance($question->cmid);
-        if (!pdfworkspace_can_see_comment($question, $entrycontext)) {
-            continue;
-        }
-
+    foreach ($questions as $question) {
         if (empty($question->votes)) {
             $question->votes = 0;
         }
         if ($question->usevotes == 0) {
             $question->votes = '-';
         }
-        $question->answercount = pdfworkspace_count_answers($question->annoid, $entrycontext);
-
-        $lastanswer = pdfworkspace_get_last_answer($question->annoid, $entrycontext);
+        $answers = $question->overviewreplies ?? pdfworkspace_get_overview_replies($question->annoid, $context);
+        $question->answercount = count($answers);
+        $lastanswer = reset($answers);
         if ($lastanswer) {
             $question->lastuser = $lastanswer->userid;
             $question->lastanswered = $lastanswer->timecreated;
@@ -1296,10 +1288,68 @@ function pdfworkspace_get_questions($activityid, $context, $questionfilter, $doc
         $question->link = (new moodle_url('/mod/pdfworkspace/view.php', array('id' => $question->cmid,
             'doc' => $question->documentid, 'page' => $question->page, 'annoid' => $question->annoid, 'commid' => $question->commentid)))->out(false);
 
-        $res[] = $question;
-
     }
-    return $res;
+    return array_values($questions);
+}
+
+/** Summarise visible, active threads and prepare links to the questions table. */
+function pdfworkspace_question_dashboard($questions, $documents, $context, $itemsperpage, $documentfilter,
+        $pdfpagefilter, $questionfilter) {
+    $unanswered = 0;
+    $pages = [];
+    foreach ($questions as $question) {
+        if ($question->isdeleted || $question->ishidden || $question->audience === 'private'
+                || $question->visibility === 'private' || !isset($documents[$question->documentid])) {
+            continue;
+        }
+        $question->dashboardvisible = true;
+        if (!$question->solved) {
+            $question->overviewreplies = pdfworkspace_get_overview_replies($question->annoid, $context);
+            $question->dashboardunanswered = !$question->overviewreplies;
+            $unanswered += (int)$question->dashboardunanswered;
+        }
+        $key = $question->documentid . ':' . $question->page;
+        if (!isset($pages[$key])) {
+            $pages[$key] = ['document' => (int)$question->documentid, 'page' => (int)$question->page,
+                'questions' => 0, 'authors' => []];
+        }
+        $pages[$key]['questions']++;
+        $pages[$key]['authors'][$question->userid] = true;
+    }
+    $pages = array_filter($pages, static fn($page) => count($page['authors']) >= 2);
+    usort($pages, static fn($a, $b) => $b['questions'] <=> $a['questions']
+        ?: count($b['authors']) <=> count($a['authors'])
+        ?: $a['document'] <=> $b['document']
+        ?: $a['page'] <=> $b['page']);
+
+    $url = new moodle_url('/mod/pdfworkspace/view.php', [
+        'id' => $context->instanceid, 'action' => 'overviewquestions', 'itemsperpage' => $itemsperpage,
+    ]);
+    $pageitems = [];
+    foreach (array_slice($pages, 0, 5) as $page) {
+        $doc = $documents[$page['document']];
+        $pageurl = new moodle_url($url, [
+            'questionfilter' => 2, 'documentfilter' => $page['document'], 'pdfpagefilter' => $page['page'],
+        ]);
+        $pageitems[] = [
+            'title' => $doc->displayname ?: $doc->filename,
+            'pagelabel' => get_string('overviewpdfpagefilter', 'pdfworkspace', $page['page']),
+            'countlabel' => get_string('overviewquestioncluster', 'pdfworkspace', (object)[
+                'questions' => $page['questions'], 'authors' => count($page['authors']),
+            ]),
+            'barwidth' => (int)round(100 * $page['questions'] / $pages[0]['questions']),
+            'url' => $pageurl->out(false),
+            'active' => $questionfilter === 2 && $documentfilter === $page['document'] && $pdfpagefilter === $page['page'],
+        ];
+    }
+    $url->param('questionfilter', 3);
+    return [
+        'unanswered' => $unanswered,
+        'unansweredurl' => $url->out(false),
+        'unansweredactive' => $questionfilter === 3 && !$documentfilter,
+        'pages' => $pageitems,
+        'help' => \mod_pdfworkspace\local\admin_help::icon('questiondashboard'),
+    ];
 }
 
 /**
@@ -1391,9 +1441,10 @@ function pdfworkspace_get_answers_for_this_user($activityid, $context, $answerfi
     $labelhidden = "<br><span class='tag tag-info'>" . get_string('hiddenforparticipants', 'pdfworkspace') . "</span>";
     $labelunavailable = "<br><span class='tag tag-info'>" . get_string('restricted') . "</span>";
 
-    if ($answerfilter == 0) { // Either: get all answers in this annotator.
+    if ($answerfilter != 1) { // All answers, or recent replies to the current user's own questions.
         $sql = "SELECT c.id AS answerid, c.content AS answer, c.userid AS userid, c.visibility, "
-            . "c.timemodified, c.solved AS correct, c.ishidden AS answerhidden, a.id AS annoid, a.page, a.documentid, q.id AS questionid, "
+            . "c.timecreated, c.timemodified, c.solved AS correct, c.ishidden AS answerhidden, "
+            . "a.id AS annoid, a.page, a.documentid, q.id AS questionid, "
             . "q.userid AS questionuserid, c.isquestion, c.annotationid, "
             . "q.visibility AS questionvisibility, "
             . "q.content AS answeredquestion, q.isdeleted AS questiondeleted, q.ishidden AS questionhidden, p.id AS annotatorid, "
@@ -1421,15 +1472,18 @@ function pdfworkspace_get_answers_for_this_user($activityid, $context, $answerfi
             . "WHERE s.userid = ? AND p.id = ? AND q.isquestion = 1 AND NOT c.isquestion = 1 AND NOT c.isdeleted = 1 AND cm.id = ? ";
     }
 
+    $params = [$USER->id, $activityid, $cmid];
+    if ($answerfilter == 2) {
+        $sql .= ' AND q.userid = ? AND c.userid <> ? AND c.timecreated >= ?'
+            . ' AND q.isdeleted = 0 AND (q.ishidden = 0 OR q.ishidden IS NULL)'
+            . ' AND (c.ishidden = 0 OR c.ishidden IS NULL)';
+        array_push($params, $USER->id, $USER->id, time() - WEEKSECS);
+    }
     if ($documentfilter) {
         $sql .= ' AND a.documentid = ? ';
-    }
-    $sql .= ' ORDER BY annoid ASC';
-
-    $params = [$USER->id, $activityid, $cmid];
-    if ($documentfilter) {
         $params[] = $documentfilter;
     }
+    $sql .= $answerfilter == 2 ? ' ORDER BY c.timecreated DESC, c.id DESC' : ' ORDER BY annoid ASC';
 
     $entries = $DB->get_records_sql($sql, $params);
 
@@ -1891,11 +1945,14 @@ function pdfworkspace_print_questions($questions, $thiscourse, $urlparams, $curr
     $url = new moodle_url($CFG->wwwroot . '/mod/pdfworkspace/view.php', $urlparams);
 
     // Define flexible table.
-    $table = new questionstable($url, $showdropdown, $usevotes);
+    $unanswered = (int)$urlparams['questionfilter'] === 3;
+    $table = new questionstable($url, $showdropdown, $usevotes, $unanswered);
     $table->setup();
     // $table->pageable(false);
     // Sort the entries of the table according to time or number of votes.
-    if (!empty($sortinfo = $table->get_sort_columns())) {
+    if ($unanswered) {
+        usort($questions, static fn($a, $b) => $a->timecreated <=> $b->timecreated ?: $a->commentid <=> $b->commentid);
+    } else if (!empty($sortinfo = $table->get_sort_columns())) {
         $sortcriterium = pdfworkspace_get_first_key_in_array($sortinfo); // Returns the name (e.g. col2) of the column which was clicked for sorting.
         $sortorder = $sortinfo[$sortcriterium]; // 3 for descending, 4 for ascending.
         $questions = pdfworkspace_sort_questions($questions, $sortcriterium, $sortorder);
@@ -1933,11 +1990,13 @@ function pdfworkspace_print_answers($data, $thiscourse, $url, $currentpage, $ite
     global $CFG, $OUTPUT;
     require_once("$CFG->dirroot/mod/pdfworkspace/model/overviewtable.php");
 
-    $table = new answerstable($url);
+    $recent = (int)$answerfilter === 2;
+    $table = new answerstable($url, $recent);
     $table->setup();
+    $documentfilter = (int)$url->get_param('documentfilter');
 
     // Sort the entries of the table according to time or number of votes.
-    if (!empty($sortinfo = $table->get_sort_columns())) {
+    if (!$recent && !empty($sortinfo = $table->get_sort_columns())) {
         $sortcriterium = pdfworkspace_get_first_key_in_array($sortinfo); // Returns the name (e.g. col2) of the column which was clicked for sorting.
         $sortorder = $sortinfo[$sortcriterium]; // 3 for descending, 4 for ascending.
         $data = pdfworkspace_sort_answers($data, $sortcriterium, $sortorder);
@@ -1946,7 +2005,8 @@ function pdfworkspace_print_answers($data, $thiscourse, $url, $currentpage, $ite
     // Add data to the table and print the requested table page.
     if ($itemsperpage == -1) { // No pagination.
         foreach ($data as $answer) {
-            pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter, $context);
+            pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter,
+                $context, $documentfilter);
         }
     } else {
         $answercount = count($data);
@@ -1958,7 +2018,8 @@ function pdfworkspace_print_answers($data, $thiscourse, $url, $currentpage, $ite
             if ($rowstoprint === 0) {
                 break;
             }
-            pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter, $context);
+            pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter,
+                $context, $documentfilter);
             $rowstoprint--;
         }
     }
@@ -2114,7 +2175,8 @@ function pdfworkspace_questionstable_add_row($thiscourse, $table, $question, $ur
  * @param answerstable $table
  * @param object $answer
  */
-function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter, $context) {
+function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, $currentpage, $itemsperpage, $answerfilter,
+        $context, $documentfilter = 0) {
     global $CFG, $PAGE;
 
     $answer->answer = pdfworkspace_get_relativelink($answer->answer, $answer->answerid, $context);
@@ -2134,7 +2196,7 @@ function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, 
     } else {
         $answeredby = "<a href=" . $CFG->wwwroot . "/user/view.php?id=$answer->userid&course=$thiscourse>" . pdfworkspace_get_username($answer->userid) . "</a>";
     }
-    $authorcell = pdfworkspace_overview_person($answeredby, $answer->timemodified);
+    $authorcell = pdfworkspace_overview_person($answeredby, (int)$answerfilter === 2 ? $answer->timecreated : $answer->timemodified);
     if ($answer->correct) {
         $authorcell .= html_writer::tag('small', get_string('correct', 'pdfworkspace'));
     }
@@ -2152,7 +2214,7 @@ function pdfworkspace_answerstable_add_row($thiscourse, $table, $answer, $cmid, 
 
     $myrenderer = $PAGE->get_renderer('mod_pdfworkspace');
     $actions = $myrenderer->render_overview_actions(new answermenu($answer->annoid, $issubscribed,
-        $cmid, $currentpage, $itemsperpage, $answerfilter));
+        $cmid, $currentpage, $itemsperpage, $answerfilter, $documentfilter));
 
     $table->add_data(array($document, $question, $answerlink, $authorcell, $actions), $classname);
 }
@@ -2291,20 +2353,13 @@ function pdfworkspace_is_phone() {
 }
 
 
-function pdfworkspace_get_last_answer($annotationid, $context) {
+/** Return replies that can be counted and opened from the questions overview, latest first. */
+function pdfworkspace_get_overview_replies($annotationid, $context) {
     global $DB;
-    $params = array('isquestion' => 0, 'annotationid' => $annotationid);
-    $answers = $DB->get_records('pdfworkspace_comments', $params, 'timecreated DESC' );
-
-    foreach ($answers as $answer) {
-        if (!pdfworkspace_can_see_comment($answer, $context)) {
-            continue;
-        } else {
-            $answer->content = pdfworkspace_get_relativelink($answer->content, $answer->id, $context);
-            return $answer;
-        }
-    }
-    return null;
+    $answers = $DB->get_records('pdfworkspace_comments',
+        ['isquestion' => 0, 'annotationid' => $annotationid, 'isdeleted' => 0], 'timecreated DESC, id DESC',
+        'id, annotationid, userid, isquestion, visibility, ishidden, timecreated');
+    return array_filter($answers, static fn($answer) => !$answer->ishidden && pdfworkspace_can_see_comment($answer, $context));
 }
 
 function pdfworkspace_can_see_comment($comment, $context) {

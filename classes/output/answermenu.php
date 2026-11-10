@@ -44,11 +44,12 @@ class answermenu implements \renderable, \templatable {
      * @param int $currentpage Page of the table on overviewpage
      * @param int $itemsperpage Number of entries on every page in the table
      * @param int $answerfilter Value of the filter for the answerstable
+     * @param int $documentfilter Selected PDF, or zero for all PDFs
      */
-    public function __construct($annotationid, $issubscribed, $cmid, $currentpage, $itemsperpage, $answerfilter) {
+    public function __construct($annotationid, $issubscribed, $cmid, $currentpage, $itemsperpage, $answerfilter, $documentfilter = 0) {
 
         global $CFG;
-        if ($answerfilter == 0 && empty($issubscribed)) { // Show all answers and this answer is not subscribed.
+        if ($answerfilter != 1 && empty($issubscribed)) {
             // No one size fits all.
             $urlparams = array('action' => 'subscribeQuestion');
             $iconclass = "icon fa fa-bell fa-fw";
@@ -70,6 +71,9 @@ class answermenu implements \renderable, \templatable {
         $urlparams['annotationid'] = $annotationid;
         $urlparams['itemsperpage'] = $itemsperpage;
         $urlparams['answerfilter'] = $answerfilter;
+        if ($documentfilter) {
+            $urlparams['documentfilter'] = $documentfilter;
+        }
         $urlparams['sesskey'] = sesskey();
         $url = new moodle_url($CFG->wwwroot . '/mod/pdfworkspace/view.php', $urlparams);
 

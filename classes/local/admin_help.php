@@ -28,7 +28,8 @@ defined('MOODLE_INTERNAL') || die();
 
 /** Contextual settings help, following the standalone Frontpage panel contract. */
 final class admin_help {
-    private const TOPICS = ['overview', 'exports', 'courseoverview', 'viewer', 'downloads', 'discussion', 'moderation', 'activityoverview', 'activitysettings'];
+    private const TOPICS = ['overview', 'exports', 'courseoverview', 'viewer', 'downloads', 'discussion', 'moderation',
+        'activityoverview', 'activitysettings', 'questiondashboard', 'recentanswers'];
     private static array $topics = ['overview', 'exports'];
     private static string $titlekey = 'adminhelp';
     private static bool $prepared = false;
@@ -46,7 +47,7 @@ final class admin_help {
 
     /** Register only the permitted settings page before its header is rendered. */
     public static function prepare(\core\hook\output\before_http_headers $hook): void {
-        global $CFG, $PAGE;
+        global $CFG, $PAGE, $USER;
         if (self::$prepared) {
             return;
         }
@@ -65,8 +66,16 @@ final class admin_help {
         self::$topics = $courseindex ? ['courseoverview'] : ['overview', 'exports'];
         if ($activityview) {
             self::$topics = ['viewer', 'activityoverview', 'discussion', 'downloads'];
-            if (str_starts_with(optional_param('action', '', PARAM_ALPHA), 'overview')) {
+            $action = optional_param('action', '', PARAM_ALPHA);
+            if (str_starts_with($action, 'overview') || $action === 'statistic') {
                 self::$topics = ['activityoverview', 'viewer', 'discussion', 'downloads'];
+            }
+            if (has_capability('mod/pdfworkspace:viewquestions', $PAGE->context)
+                    && \mod_pdfworkspace\visibility::is_staff($PAGE->context, $USER->id)) {
+                self::$topics[] = 'questiondashboard';
+            }
+            if (has_capability('mod/pdfworkspace:viewanswers', $PAGE->context)) {
+                self::$topics[] = 'recentanswers';
             }
             if (has_any_capability(['mod/pdfworkspace:deleteany', 'mod/pdfworkspace:hidecomments',
                     'mod/pdfworkspace:viewreports'], $PAGE->context)) {

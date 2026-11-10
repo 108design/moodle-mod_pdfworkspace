@@ -22,8 +22,6 @@
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use mod_pdfworkspace\output\statistics;
-
 defined('MOODLE_INTERNAL') || die();
 
 $action = optional_param('action', 'view', PARAM_ALPHA); // The default action is 'view'.
@@ -36,7 +34,7 @@ require_course_login($pdfworkspace->course, true, $cm);
 
 /* * ********************************************** Display overview page *********************************************** */
 
-if ($action === 'overview') {
+if ($action === 'overview' || $action === 'statistic') {
     // Go to question-overview by default.
     $action = 'overviewquestions';
 }
@@ -153,9 +151,18 @@ if ($action === 'overviewquestions') {
 
     $currentpage = optional_param('page', 0, PARAM_INT);
     $itemsperpage = optional_param('itemsperpage', 5, PARAM_INT);
-    $questionfilter = optional_param('questionfilter', 0, PARAM_INT); // Default 0 means: Display only unsolved/open questions.
+    $staff = \mod_pdfworkspace\visibility::is_staff($context, $USER->id);
+    $options = [0 => get_string('openquestions', 'pdfworkspace'),
+        1 => get_string('closedquestions', 'pdfworkspace'),
+        2 => get_string('allquestions', 'pdfworkspace')];
+    if ($staff) {
+        $options[3] = get_string('openunansweredquestions', 'pdfworkspace');
+    }
+    $questionfilter = optional_param('questionfilter', 0, PARAM_INT);
+    $questionfilter = isset($options[$questionfilter]) ? $questionfilter : 0;
     $documentfilter = pdfworkspace_valid_document_filter($pdfworkspace->id, $context->id,
         optional_param('documentfilter', 0, PARAM_INT));
+    $pdfpagefilter = $staff && $documentfilter ? max(0, optional_param('pdfpagefilter', 0, PARAM_INT)) : 0;
 
     $thisannotator = $pdfworkspace->id;
     $thiscourse = $pdfworkspace->course;
@@ -163,16 +170,36 @@ if ($action === 'overviewquestions') {
 
     pdfworkspace_prepare_overviewpage($id, $myrenderer, $taburl, ['tab' => 'overview', 'action' => $action], $pdfworkspace,
         $context);
-    echo $OUTPUT->heading(get_string('questionstab', 'pdfworkspace'));
+    echo html_writer::div($OUTPUT->heading(get_string('questionstab', 'pdfworkspace'), 2, 'mb-0'), 'pt-4 pb-3');
+    if ($staff) {
+        $questions = pdfworkspace_load_overview_questions($thisannotator, $context, 2);
+        echo $OUTPUT->render_from_template('mod_pdfworkspace/question_dashboard',
+            pdfworkspace_question_dashboard($questions, $pdfworkspace->documents, $context, $itemsperpage, $documentfilter,
+                $pdfpagefilter, $questionfilter));
+        $questions = array_filter($questions, static function($question) use ($questionfilter, $documentfilter, $pdfpagefilter) {
+            return (!$documentfilter || (int)$question->documentid === $documentfilter)
+                && (!$pdfpagefilter || ((int)$question->page === $pdfpagefilter && !empty($question->dashboardvisible)))
+                && match ($questionfilter) {
+                    0 => !$question->solved,
+                    1 => (bool)$question->solved,
+                    3 => !empty($question->dashboardunanswered),
+                    default => true,
+                };
+        });
+        $questions = pdfworkspace_prepare_overview_questions($questions, $context);
+    } else {
+        $questions = pdfworkspace_get_questions($thisannotator, $context, $questionfilter, $documentfilter);
+    }
+    if ($pdfpagefilter) {
+        echo html_writer::div(get_string('overviewpdfpagefilter', 'pdfworkspace', $pdfpagefilter), 'mb-2');
+    }
     echo pdfworkspace_render_overview_filters($cmid, $thisannotator, $action, 'questionfilter',
-        $questionfilter, [0 => get_string('openquestions', 'pdfworkspace'),
-            1 => get_string('closedquestions', 'pdfworkspace'),
-            2 => get_string('allquestions', 'pdfworkspace')], $itemsperpage, $documentfilter);
-
-    $questions = pdfworkspace_get_questions($thisannotator, $context, $questionfilter, $documentfilter);
+        $questionfilter, $options, $itemsperpage, $documentfilter);
 
     if (empty($questions)) {
-        if ($questionfilter == 1) {
+        if ($questionfilter === 3) {
+            $info = get_string('noopenunansweredquestions', 'pdfworkspace');
+        } else if ($questionfilter == 1) {
             $info = get_string('noquestionsclosed_overview', 'pdfworkspace');
         } else if ($questionfilter == 2) {
             $info = get_string('noquestions_overview', 'pdfworkspace');
@@ -183,6 +210,9 @@ if ($action === 'overviewquestions') {
     } else {
         $urlparams = array('action' => 'overviewquestions', 'id' => $cmid, 'page' => $currentpage, 'itemsperpage' => $itemsperpage,
             'questionfilter' => $questionfilter, 'documentfilter' => $documentfilter);
+        if ($pdfpagefilter) {
+            $urlparams['pdfpagefilter'] = $pdfpagefilter;
+        }
         pdfworkspace_print_questions($questions, $thiscourse, $urlparams, $currentpage, $itemsperpage, $context);
     }
 }
@@ -267,6 +297,7 @@ if ($action === 'overviewanswers') {
 
     $itemsperpage = optional_param('itemsperpage', 5, PARAM_INT);
     $answerfilter = optional_param('answerfilter', 1, PARAM_INT);
+    $answerfilter = in_array($answerfilter, [0, 1, 2], true) ? $answerfilter : 1;
     $documentfilter = pdfworkspace_valid_document_filter($pdfworkspace->id, $context->id,
         optional_param('documentfilter', 0, PARAM_INT));
 
@@ -276,15 +307,29 @@ if ($action === 'overviewanswers') {
 
     pdfworkspace_prepare_overviewpage($id, $myrenderer, $taburl, ['tab' => 'overview', 'action' => $action], $pdfworkspace,
         $context);
-    echo $OUTPUT->heading(get_string('answerstab', 'pdfworkspace'));
+    echo html_writer::div($OUTPUT->heading(get_string('answerstab', 'pdfworkspace'), 2, 'mb-0'), 'pt-4 pb-3');
+    $recenturl = new moodle_url('/mod/pdfworkspace/view.php', [
+        'id' => $cmid, 'action' => $action, 'answerfilter' => 2, 'documentfilter' => $documentfilter,
+        'itemsperpage' => $itemsperpage,
+    ]);
+    echo html_writer::div(html_writer::link($recenturl, get_string('recentownanswers', 'pdfworkspace'), [
+        'class' => 'btn ' . ($answerfilter === 2 ? 'btn-primary' : 'btn-outline-primary'),
+        'aria-current' => $answerfilter === 2 ? 'page' : null,
+    ]) . \mod_pdfworkspace\local\admin_help::icon('recentanswers'), 'd-flex align-items-center gap-2 mb-3');
     echo pdfworkspace_render_overview_filters($cmid, $thisannotator, $action, 'answerfilter',
         $answerfilter, [0 => get_string('allanswers', 'pdfworkspace'),
-            1 => get_string('subscribedanswers', 'pdfworkspace')], $itemsperpage, $documentfilter);
+            1 => get_string('subscribedanswers', 'pdfworkspace'),
+            2 => get_string('recentownanswers', 'pdfworkspace')], $itemsperpage, $documentfilter);
+    if ($answerfilter === 2) {
+        echo html_writer::tag('p', get_string('recentownanswersperiod', 'pdfworkspace'), ['class' => 'text-muted']);
+    }
 
     $data = pdfworkspace_get_answers_for_this_user($thisannotator, $context, $answerfilter, $documentfilter);
 
     if (empty($data)) {
-        if ($answerfilter == 1) {
+        if ($answerfilter === 2) {
+            $info = get_string('norecentownanswers', 'pdfworkspace');
+        } else if ($answerfilter == 1) {
             $info = get_string('noanswerssubscribed', 'pdfworkspace');
         } else {
             $info = get_string('noanswers', 'pdfworkspace');
@@ -319,7 +364,7 @@ if ($action === 'overviewownposts') {
 
     pdfworkspace_prepare_overviewpage($id, $myrenderer, $taburl, ['tab' => 'overview', 'action' => $action], $pdfworkspace,
         $context);
-    echo $OUTPUT->heading(get_string('ownpoststab', 'pdfworkspace'));
+    echo html_writer::div($OUTPUT->heading(get_string('ownpoststab', 'pdfworkspace'), 2, 'mb-0'), 'pt-4 pb-3');
     echo pdfworkspace_render_overview_filters($cmid, $thisannotator, $action, null,
         null, [], $itemsperpage, $documentfilter);
 
@@ -436,7 +481,7 @@ if ($action === 'overviewreports') {
 
     pdfworkspace_prepare_overviewpage($id, $myrenderer, $taburl, ['tab' => 'overview', 'action' => $action], $pdfworkspace,
         $context);
-    echo $OUTPUT->heading(get_string('reportstab', 'pdfworkspace'));
+    echo html_writer::div($OUTPUT->heading(get_string('reportstab', 'pdfworkspace'), 2, 'mb-0'), 'pt-4 pb-3');
     echo pdfworkspace_render_overview_filters($cmid, $thisannotator, $action, 'reportfilter',
         $reportfilter, [0 => get_string('unseenreports', 'pdfworkspace'),
             1 => get_string('seenreports', 'pdfworkspace'),
@@ -471,32 +516,6 @@ if ($action === 'view') { // Default.
     echo $myrenderer->pdfworkspace_render_tabs($taburl, $pdfworkspace->name, $context, $action);
 
     pdfworkspace_display_embed($pdfworkspace, $cm, $course, $file, $page, $annoid, $commid);
-}
-
-/* * ********************************************** Display statistics *********************************************** */
-
-if ($action === 'statistic') {
-
-    pdfworkspace_require_statistics_access($context);
-
-    require_once($CFG->dirroot . '/mod/pdfworkspace/model/statistics.class.php');
-
-    echo $myrenderer->pdfworkspace_render_tabs($taburl, $pdfworkspace->name, $context, $action);
-    echo $OUTPUT->heading(get_string('statistic', 'pdfworkspace'));
-
-    // Give javascript access to the language string repository.
-    $stringman = get_string_manager();
-    $strings = $stringman->load_component_strings('pdfworkspace', 'en'); // Method gets the strings of the language files.
-    $PAGE->requires->strings_for_js(array_keys($strings), 'pdfworkspace'); // Method to use the language-strings in javascript.
-    $myrenderer = $PAGE->get_renderer('mod_pdfworkspace');
-    $capabilities = new stdClass();
-    $capabilities->viewquestions = has_capability('mod/pdfworkspace:viewquestions', $context);
-    $capabilities->viewanswers = has_capability('mod/pdfworkspace:viewanswers', $context);
-    $capabilities->viewposts = has_capability('mod/pdfworkspace:viewposts', $context);
-    $capabilities->viewreports = has_capability('mod/pdfworkspace:viewreports', $context);
-    $capabilities->viewteacherstatistics = has_capability('mod/pdfworkspace:viewteacherstatistics', $context);
-
-    echo $myrenderer->render_statistic(new statistics($cm->instance, $course->id, $capabilities, $id));
 }
 
 /* * ***************************************** Display form for reporting a comment  ******************************************** */

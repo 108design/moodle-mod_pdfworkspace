@@ -31,6 +31,83 @@ require_once($CFG->dirroot . '/mod/pdfworkspace/locallib.php');
 require_once($CFG->dirroot . '/mod/pdfworkspace/model/comment.class.php');
 
 class multi_document_test extends \advanced_testcase {
+    /** Dashboard and recent replies respect document, author, status and visibility boundaries. */
+    public function test_overview_triage_and_recent_replies(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course();
+        $activity = $generator->create_module('pdfworkspace', ['course' => $course->id]);
+        $context = \context_module::instance($activity->cmid);
+        $teacher = $generator->create_and_enrol($course, 'teacher');
+        $learner = $generator->create_and_enrol($course, 'student');
+        $peer = $generator->create_and_enrol($course, 'student');
+        $documents = [];
+        foreach (['first.pdf', 'second.pdf'] as $filename) {
+            $file = get_file_storage()->create_file_from_string([
+                'contextid' => $context->id, 'component' => 'mod_pdfworkspace', 'filearea' => 'content',
+                'itemid' => 0, 'filepath' => '/', 'filename' => $filename,
+            ], '%PDF-1.4 ' . $filename);
+        }
+        $documents = pdfworkspace_get_documents($activity->id, $context->id);
+        [$first, $second] = array_keys($documents);
+        $type = $DB->get_field('pdfworkspace_annotationtypes', 'id', ['name' => 'pin'], MUST_EXIST);
+        $now = time();
+        $thread = static function($document, $page, $author, $audience = 'public', $state = []) use ($DB, $activity, $type, $now) {
+            $annotation = $DB->insert_record('pdfworkspace_annotations', [
+                'pdfworkspaceid' => $activity->id, 'documentid' => $document, 'page' => $page,
+                'userid' => $author, 'annotationtypeid' => $type, 'data' => '{}', 'audience' => $audience,
+                'timecreated' => $now - WEEKSECS * 2,
+            ]);
+            $DB->insert_record('pdfworkspace_comments', $state + [
+                'pdfworkspaceid' => $activity->id, 'annotationid' => $annotation, 'userid' => $author,
+                'content' => 'Question', 'isquestion' => 1, 'visibility' => $audience,
+                'timecreated' => $now - WEEKSECS * 2, 'timemodified' => $now,
+            ]);
+            return $annotation;
+        };
+        $reply = static function($annotation, $author, $created, $state = []) use ($DB, $activity, $now) {
+            return $DB->insert_record('pdfworkspace_comments', $state + [
+                'pdfworkspaceid' => $activity->id, 'annotationid' => $annotation, 'userid' => $author,
+                'content' => 'Reply', 'isquestion' => 0, 'visibility' => 'public',
+                'timecreated' => $created, 'timemodified' => $now,
+            ]);
+        };
+
+        $answered = $thread($first, 7, $learner->id, 'protected');
+        $unanswered = $thread($first, 7, $peer->id);
+        $otherpdf = $thread($second, 7, $learner->id);
+        $thread($second, 7, $peer->id, 'private');
+        $thread($second, 7, $peer->id, 'public', ['ishidden' => 1]);
+        $thread($second, 7, $peer->id, 'public', ['isdeleted' => 1]);
+        $closed = $thread($second, 9, $peer->id, 'public', ['solved' => $teacher->id]);
+        $recent = $reply($answered, $teacher->id, $now - 10);
+        $earlier = $reply($answered, $teacher->id, $now - 60);
+        $reply($answered, $teacher->id, $now - WEEKSECS - 120);
+        $reply($answered, $learner->id, $now - 5);
+        $reply($answered, $teacher->id, $now - 4, ['ishidden' => 1]);
+        $reply($answered, $teacher->id, $now - 3, ['isdeleted' => 1]);
+        $reply($unanswered, $teacher->id, $now - 2, ['visibility' => 'private', 'userid' => $peer->id]);
+        $reply($otherpdf, $teacher->id, $now - 1, ['ishidden' => 1]);
+        $reply($closed, $teacher->id, $now);
+
+        $this->setUser($teacher);
+        $questions = pdfworkspace_load_overview_questions($activity->id, $context, 2);
+        $dashboard = pdfworkspace_question_dashboard($questions, $documents, $context, 5, 0, 0, 0);
+        $this->assertSame(2, $dashboard['unanswered']);
+        $this->assertTrue($questions[$unanswered]->dashboardunanswered);
+        $this->assertTrue($questions[$otherpdf]->dashboardunanswered);
+        $this->assertCount(1, $dashboard['pages']);
+        $this->assertSame($documents[$first]->filename, $dashboard['pages'][0]['title']);
+        $this->assertStringContainsString('pdfpagefilter=7', $dashboard['pages'][0]['url']);
+        $this->assertStringContainsString('questionfilter=3', $dashboard['unansweredurl']);
+
+        $this->setUser($learner);
+        $answers = pdfworkspace_get_answers_for_this_user($activity->id, $context, 2, $first);
+        $this->assertEquals([$recent, $earlier], array_column($answers, 'answerid'));
+        $this->assertSame([], pdfworkspace_get_answers_for_this_user($activity->id, $context, 2, $second));
+    }
+
     public function test_annotations_and_questions_stay_on_their_pdf(): void {
         global $DB, $USER, $CFG, $PAGE;
 
