@@ -1,4 +1,6 @@
 <?php
+// @copyright 2026 Andreas Giesen <andreas@108design.com>
+// @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify

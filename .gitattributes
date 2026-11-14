@@ -26,8 +26,6 @@
 "/amd/build/jspdf.min.js.map" -export-ignore -export-subst
 "/amd/build/overview.min.js" -export-ignore -export-subst
 "/amd/build/overview.min.js.map" -export-ignore -export-subst
-"/amd/build/statistic.min.js" export-ignore -export-subst
-"/amd/build/statistic.min.js.map" export-ignore -export-subst
 "/amd/build/textclipper.min.js" -export-ignore -export-subst
 "/amd/build/textclipper.min.js.map" -export-ignore -export-subst
 "/amd/build/tooltips.min.js" -export-ignore -export-subst
@@ -43,7 +41,6 @@
 "/amd/src/document_settings.js" -export-ignore -export-subst
 "/amd/src/jspdf.js" -export-ignore -export-subst
 "/amd/src/overview.js" -export-ignore -export-subst
-"/amd/src/statistic.js" export-ignore -export-subst
 "/amd/src/textclipper.js" -export-ignore -export-subst
 "/amd/src/tooltips.js" -export-ignore -export-subst
 "/amd/src/viewer.js" -export-ignore -export-subst
@@ -71,7 +68,6 @@
 "/classes/output/printview.php" -export-ignore -export-subst
 "/classes/output/questionmenu.php" -export-ignore -export-subst
 "/classes/output/reportmenu.php" -export-ignore -export-subst
-"/classes/output/statistics.php" export-ignore -export-subst
 "/classes/pdf_export.php" -export-ignore -export-subst
 "/classes/privacy" -export-ignore -export-subst
 "/classes/privacy/provider.php" -export-ignore -export-subst
@@ -123,7 +119,6 @@
 "/model/comment.class.php" -export-ignore -export-subst
 "/model/overviewtable.php" -export-ignore -export-subst
 "/model/pdfworkspace.php" -export-ignore -export-subst
-"/model/statistics.class.php" export-ignore -export-subst
 "/pix" -export-ignore -export-subst
 "/pix/adminbrand.svg" -export-ignore -export-subst
 "/pix/area.PNG" -export-ignore -export-subst
@@ -391,7 +386,6 @@
 "/templates/overview_actions.mustache" -export-ignore -export-subst
 "/templates/question_dashboard.mustache" -export-ignore -export-subst
 "/templates/settings_help_icon.mustache" -export-ignore -export-subst
-"/templates/statistic.mustache" export-ignore -export-subst
 "/tests" -export-ignore -export-subst
 "/tests/combined_export_test.py" -export-ignore -export-subst
 "/tests/compatibility_test.php" -export-ignore -export-subst
