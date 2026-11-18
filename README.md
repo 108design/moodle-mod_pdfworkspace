@@ -11,7 +11,7 @@ markings and comments with the audiences allowed by the activity settings.
 ## Screenshots
 
 <details>
-<summary>View screenshots (10)</summary>
+<summary>View screenshots (9)</summary>
 
 Click a preview to open the full-size screenshot.
 
@@ -38,12 +38,12 @@ Click a preview to open the full-size screenshot.
 </tr>
 <tr>
 <td align="center" width="50%" valign="middle">
-<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview-new.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-overview-new.jpg" width="300" height="148" alt="Compact overview with document links and comment previews"></a><br>
-<sub>Compact overview with document links and comment previews</sub>
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-import-course-pdfs.png"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-import-course-pdfs.png" width="300" height="307" alt="Select several course PDFs in the activity settings"></a><br>
+<sub>Select several course PDFs in the activity settings</sub>
 </td>
 <td align="center" width="50%" valign="middle">
-<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-add-documents.jpg" width="300" height="144" alt="Select workspace documents and download order"></a><br>
-<sub>Select workspace documents and download order</sub>
+<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-manage-saved-pdfs.png"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-manage-saved-pdfs.png" width="300" height="138" alt="Manage saved PDFs as a site administrator. The red border marks a PDF with annotations."></a><br>
+<sub>Manage saved PDFs as a site administrator. The red border marks a PDF with annotations.</sub>
 </td>
 </tr>
 <tr>
@@ -52,15 +52,11 @@ Click a preview to open the full-size screenshot.
 <sub>Current PDF and workspace download options</sub>
 </td>
 <td align="center" width="50%" valign="middle">
-<a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new1.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new1.jpg" width="277" height="160" alt="Upload PDFs and configure permitted audiences"></a><br>
-<sub>Upload PDFs and configure permitted audiences</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="50%" valign="middle">
 <a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new2.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-new2.jpg" width="300" height="122" alt="Configure annotation tools and participant downloads"></a><br>
 <sub>Configure annotation tools and participant downloads</sub>
 </td>
+</tr>
+<tr>
 <td align="center" width="50%" valign="middle">
 <a href="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-settings.jpg"><img src="https://raw.githubusercontent.com/108design/moodle-mod_pdfworkspace/main/docs/screenshots/pdf-workspace-settings.jpg" width="300" height="148" alt="Site administration and combined-export settings"></a><br>
 <sub>Site administration and combined-export settings</sub>
@@ -84,7 +80,7 @@ Supports Moodle 4.5, 5.0, 5.1, 5.2 and 5.3.
 
 1. Install the plugin as `mod/pdfworkspace` below Moodle's plugin directory.
 2. Complete installation through **Site administration → Notifications**.
-3. Add a **PDF Workspace** activity to a course and upload the PDFs.
+3. Add a **PDF Workspace** activity to a course. Upload PDFs or select them from the course.
 4. Configure annotation audiences and the downloads available to participants.
 
 For Moodle installations using the split web directory, the plugin belongs in
@@ -98,8 +94,25 @@ stand on its own or start a comment thread. The activity settings control which
 audiences participants and staff may select. Replies keep the thread's audience.
 
 Teachers with course editing permission can change the displayed document names.
-A PDF with existing annotations is protected from replacement or removal, so
-comments keep referring to the document on which they were made.
+
+### Import PDFs from the course
+
+In the activity settings, tick several PDFs under **Individual PDFs from This
+Course**, or select one or more course sections to import all eligible PDFs in
+them. The picker finds locally stored PDF files in visible File and Folder
+resources and in other PDF Workspace activities in the same course. Sources and
+their sections must be unrestricted and shown on the course page. For another
+workspace, you also need permission to view it and manage its files. The import
+copies the PDF. Its markings and discussions stay in the source workspace.
+
+### Remove PDFs with markings or comments
+
+Site administrators and users with editing rights and the **Remove PDFs with
+markings and discussions** permission (`mod/pdfworkspace:deleteannotateddocument`)
+can remove annotated PDFs in the activity settings. A red border identifies the
+removal checkbox for a PDF with markings or comments. Tick the checkbox, choose
+**Remove anyway**, then save the settings to remove the PDF and its markings and
+discussions. At least one PDF must stay in the workspace.
 
 ## Finding questions and replies
 
