@@ -69,6 +69,13 @@ $capabilities = array(
         ),
     ),
 
+    'mod/pdfworkspace:deleteannotateddocument' => [
+        'riskbitmask' => RISK_DATALOSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [],
+    ],
+
     'mod/pdfworkspace:create' => array ( // Create annotation or comment.
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',

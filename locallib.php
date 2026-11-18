@@ -821,16 +821,35 @@ function pdfworkspace_validate_draft_documents($activityid, $contextid, $draftfi
     return null;
 }
 
-function pdfworkspace_set_mainfile($data, $removedocumentids = []) {
+/** Resolve course selections again on save, using the destination's actual course. */
+function pdfworkspace_resolve_course_documents($data): array {
+    $sectionids = $data->courseimportsections ?? [];
+    $fileids = $data->courseimportfiles ?? [];
+    if (!$sectionids && !$fileids) {
+        return [null, []];
+    }
+    $context = context_module::instance($data->coursemodule);
+    $coursecontext = $context->get_course_context();
+    require_capability('moodle/course:manageactivities', empty($data->instance) ? $coursecontext : $context);
+    if (empty($data->instance)) {
+        require_capability('mod/pdfworkspace:addinstance', $coursecontext);
+    }
+    get_fast_modinfo($coursecontext->instanceid, 0, true);
+    $catalogue = new \mod_pdfworkspace\local\course_documents($coursecontext->instanceid, (int)$data->coursemodule);
+    return [$catalogue, $catalogue->select($sectionids, $fileids)];
+}
+
+function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles = [], $removalconfirmations = []) {
     global $DB, $USER;
     $fs = get_file_storage();
     $cmid = $data->coursemodule;
-    $draftitemid = $data->files; // Name from the filemanger.
+    $draftitemid = $data->files ?? 0;
 
     $context = context_module::instance($cmid);
     $activityid = (int)$data->id;
     $documents = pdfworkspace_get_documents($activityid, $context->id);
     $originaldocumentids = array_keys($documents);
+    $withdiscussion = [];
     if ($removedocumentids) {
         foreach ($removedocumentids as $documentid) {
             if (!isset($documents[$documentid])) {
@@ -838,7 +857,9 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = []) {
             }
             $document = $documents[$documentid];
             if ($DB->record_exists('pdfworkspace_annotations', ['documentid' => $documentid])) {
-                throw new moodle_exception('documentannotatedimmutable', 'pdfworkspace', '', $document->filename);
+                \mod_pdfworkspace\local\document_removal::require_confirmation(
+                    $context, $documentid, $removalconfirmations[$documentid] ?? '');
+                $withdiscussion[$documentid] = true;
             }
         }
     }
@@ -869,7 +890,7 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = []) {
         $draftfiles = [];
     }
     if (!empty($data->instance)) {
-        if (count($documents) - count($removedocumentids) + count($draftfiles) < 1) {
+        if (count($documents) - count($removedocumentids) + count($draftfiles) + count($coursefiles) < 1) {
             throw new moodle_exception('required');
         }
         foreach ($draftfiles as $draftfile) {
@@ -880,6 +901,9 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = []) {
         }
         foreach ($removedocumentids as $documentid) {
             $document = $documents[$documentid];
+            if (isset($withdiscussion[$documentid])) {
+                \mod_pdfworkspace\local\document_removal::delete_discussion($context, $activityid, $documentid);
+            }
             $oldfile = $fs->get_file($context->id, 'mod_pdfworkspace', 'content', 0,
                 $document->filepath, $document->filename);
             if ($oldfile) {
@@ -897,6 +921,19 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = []) {
                 'userid' => $USER->id,
             ], $draftfile);
         }
+    }
+    foreach ($coursefiles as $coursefile) {
+        $filename = $fs->get_unused_filename($context->id, 'mod_pdfworkspace', 'content', 0, '/', $coursefile->get_filename());
+        $fs->create_file_from_storedfile([
+            'contextid' => $context->id,
+            'component' => 'mod_pdfworkspace',
+            'filearea' => 'content',
+            'itemid' => 0,
+            'filepath' => '/',
+            'filename' => $filename,
+            'userid' => $USER->id,
+            'sortorder' => 0,
+        ], $coursefile);
     }
     $files = $fs->get_area_files($context->id, 'mod_pdfworkspace', 'content', 0, 'sortorder', false);
     $documents = pdfworkspace_get_documents($activityid, $context->id);

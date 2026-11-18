@@ -126,6 +126,8 @@ function pdfworkspace_add_instance($data, $mform) {
     require_once("$CFG->libdir/resourcelib.php");
     require_once("$CFG->dirroot/mod/pdfworkspace/locallib.php");
     $cmid = $data->coursemodule;
+    [$catalogue, $coursefiles] = pdfworkspace_resolve_course_documents($data);
+    $transaction = $coursefiles ? $DB->start_delegated_transaction() : null;
     $data->timemodified = time();
     pdfworkspace_set_allowed_audiences($data);
     pdfworkspace_set_display_options($data);
@@ -134,11 +136,15 @@ function pdfworkspace_add_instance($data, $mform) {
 
     // We need to use context now, so we need to make sure all needed info is already in db.
     $DB->set_field('course_modules', 'instance', $data->id, array('id' => $cmid));
-    pdfworkspace_set_mainfile($data);
+    pdfworkspace_set_mainfile($data, [], $coursefiles);
 
     $completiontimeexpected = !empty($data->completionexpected) ? $data->completionexpected : null;
     \core_completion\api::update_completion_date_event($cmid, 'pdfworkspace', $data->id, $completiontimeexpected);
 
+    if ($coursefiles && !empty($data->courseimporthide)) {
+        $catalogue->hide_complete_sources($coursefiles);
+    }
+    $transaction?->allow_commit();
     return $data->id;
 }
 
@@ -149,17 +155,22 @@ function pdfworkspace_add_instance($data, $mform) {
  * @return bool true
  */
 function pdfworkspace_update_instance($data, $mform) {
-    global $CFG, $DB;
+    global $CFG, $DB, $SESSION;
     require_once("$CFG->libdir/resourcelib.php");
     require_once("$CFG->dirroot/mod/pdfworkspace/locallib.php");
+    [$catalogue, $coursefiles] = pdfworkspace_resolve_course_documents($data);
     $data->timemodified = time();
     pdfworkspace_set_allowed_audiences($data);
     $removedocumentids = [];
+    $removalconfirmations = [];
     foreach (array_keys(get_object_vars($data)) as $property) {
         if (preg_match('/^removedocument_([0-9]+)$/', $property, $matches)) {
             if (!empty($data->$property)) {
                 $removedocumentids[] = (int)$matches[1];
             }
+            unset($data->$property);
+        } else if (preg_match('/^confirmremovedocument_([0-9]+)$/', $property, $matches)) {
+            $removalconfirmations[(int)$matches[1]] = clean_param($data->$property, PARAM_ALPHANUM);
             unset($data->$property);
         }
     }
@@ -168,13 +179,33 @@ function pdfworkspace_update_instance($data, $mform) {
 
     pdfworkspace_set_display_options($data); // Can be deleted or extended.
 
-    $DB->update_record('pdfworkspace', $data);
-    pdfworkspace_set_mainfile($data, $removedocumentids);
-    pdfworkspace_save_workspace_selection($data);
+    $lock = \mod_pdfworkspace\local\document_removal::lock($data->id);
+    $transaction = null;
+    try {
+        $transaction = ($coursefiles || $removedocumentids) ? $DB->start_delegated_transaction() : null;
+        $DB->update_record('pdfworkspace', $data);
+        pdfworkspace_set_mainfile($data, $removedocumentids, $coursefiles, $removalconfirmations);
+        pdfworkspace_save_workspace_selection($data);
 
-    $completiontimeexpected = !empty($data->completionexpected) ? $data->completionexpected : null;
-    \core_completion\api::update_completion_date_event($data->coursemodule, 'pdfworkspace', $data->id, $completiontimeexpected);
+        $completiontimeexpected = !empty($data->completionexpected) ? $data->completionexpected : null;
+        \core_completion\api::update_completion_date_event($data->coursemodule, 'pdfworkspace', $data->id,
+            $completiontimeexpected);
 
+        if ($coursefiles && !empty($data->courseimporthide)) {
+            $catalogue->hide_complete_sources($coursefiles);
+        }
+        $transaction?->allow_commit();
+        foreach ($removedocumentids as $documentid) {
+            unset($SESSION->pdfworkspace_document_confirmation[$data->coursemodule][$documentid]);
+        }
+    } catch (\Throwable $exception) {
+        if ($transaction && !$transaction->is_disposed()) {
+            $transaction->rollback($exception);
+        }
+        throw $exception;
+    } finally {
+        $lock->release();
+    }
     return true;
 }
 

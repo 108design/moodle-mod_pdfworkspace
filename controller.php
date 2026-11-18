@@ -223,6 +223,8 @@ if ($action === 'overviewquestions') {
 if ($action === 'subscribeQuestion') {
     require_sesskey();
     require_capability('mod/pdfworkspace:subscribe', $context);
+    $lock = \mod_pdfworkspace\local\document_removal::lock($cm->instance);
+    register_shutdown_function([$lock, 'release']);
 
     global $DB;
 
@@ -559,6 +561,9 @@ if ($action === 'report') {
         if ((int)$report->commentid !== (int)$reportedcomment->id) {
             throw new invalid_parameter_exception('Invalid comment for report');
         }
+        $lock = \mod_pdfworkspace\local\document_removal::lock($cm->instance);
+        register_shutdown_function([$lock, 'release']);
+        $DB->get_record('pdfworkspace_comments', ['id' => $commentid, 'pdfworkspaceid' => $cm->instance], 'id', MUST_EXIST);
 
         // 1. Notify course manager(s).
         $recipients = get_enrolled_users($context, 'mod/pdfworkspace:viewreports');

@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 /** Contextual settings help, following the standalone Frontpage panel contract. */
 final class admin_help {
     private const TOPICS = ['overview', 'exports', 'courseoverview', 'viewer', 'downloads', 'discussion', 'moderation',
-        'activityoverview', 'activitysettings', 'questiondashboard', 'recentanswers'];
+        'activityoverview', 'activitysettings', 'questiondashboard', 'recentanswers', 'courseimport'];
     private static array $topics = ['overview', 'exports'];
     private static string $titlekey = 'adminhelp';
     private static bool $prepared = false;
@@ -83,7 +83,7 @@ final class admin_help {
             }
         }
         if ($activitysettings) {
-            self::$topics = ['activitysettings', 'discussion', 'downloads'];
+            self::$topics = ['activitysettings', 'courseimport', 'discussion', 'downloads'];
         }
         self::$titlekey = $courseindex || $activityview || $activitysettings ? 'activityhelp' : 'adminhelp';
         $PAGE->add_body_class('mod-pdfworkspace-admin-help-page');

@@ -32,14 +32,16 @@ require_once($CFG->libdir . '/filelib.php');
 
 class mod_pdfworkspace_mod_form extends moodleform_mod {
 
+    /** @var \mod_pdfworkspace\local\course_documents|null Course file catalogue for this form request. */
+    private ?\mod_pdfworkspace\local\course_documents $coursefiles = null;
+
     public function definition() {
 
-        global $CFG, $USER, $COURSE, $DB, $PAGE;
+        global $CFG, $USER, $COURSE, $DB, $PAGE, $OUTPUT;
         \mod_pdfworkspace\local\admin_help::register_activity_settings();
         $mform =& $this->_form;
         $config = get_config('mod_pdfworkspace');
-        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026100200-2']));
-        $PAGE->requires->js_call_amd('mod_pdfworkspace/document_settings', 'init');
+        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026111804-1']));
         $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -62,8 +64,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         $attributes['rows'] = 5;
         $element->setAttributes($attributes);
 
-        // Existing PDFs stay outside the editable draft area. A locked PDF has
-        // no clickable filemanager row or delete action.
+        // Existing PDFs stay outside the editable draft area.
         if ($this->current->instance) {
             require_once(__DIR__ . '/locallib.php');
             $documents = pdfworkspace_get_documents($this->current->instance, $this->context->id);
@@ -79,23 +80,34 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             }
             $mform->addElement('static', 'documentcolumns', '',
                 html_writer::div($header, 'pdfworkspace-document-columns', ['aria-hidden' => 'true']));
+            $candeleteannotated = has_capability('mod/pdfworkspace:deleteannotateddocument', $this->context);
             $position = 0;
             foreach ($documents as $document) {
                 $hasannotations = $DB->record_exists('pdfworkspace_annotations', ['documentid' => $document->id]);
                 $title = $document->displayname ?: $document->filename;
-                $tooltip = get_string($hasannotations ? 'documentlockedshort' : 'removedocument', 'pdfworkspace');
-                $attributes = ['title' => $tooltip, 'aria-label' => $tooltip . ': ' . $title];
-                if ($hasannotations) {
-                    $attributes['disabled'] = 'disabled';
-                }
+                $action = get_string($hasannotations && !$candeleteannotated ? 'documentlockedshort' : 'removedocument',
+                    'pdfworkspace');
+                $tooltip = $hasannotations ? get_string('documentannotatedtooltip', 'pdfworkspace') : $action;
+                $attributes = ['title' => $tooltip, 'aria-label' => $action . ': ' . $title];
                 $remove = 'removedocument_' . $document->id;
                 $include = 'exportincluded_' . $document->id;
                 $order = 'exportorder_' . $document->id;
+                $label = html_writer::tag('span', s($title), ['class' => 'pdfworkspace-document-filename',
+                    'title' => $document->filename]);
+                if ($hasannotations) {
+                    if ($candeleteannotated) {
+                        $attributes['data-document-removal-id'] = $document->id;
+                        $attributes['data-document-filename'] = $document->filename;
+                        $confirmation = 'confirmremovedocument_' . $document->id;
+                        $mform->addElement('hidden', $confirmation, '');
+                        $mform->setType($confirmation, PARAM_ALPHANUM);
+                    } else {
+                        $attributes['disabled'] = 'disabled';
+                    }
+                }
                 $elements = [
                     $mform->createElement('advcheckbox', $remove, '', '', $attributes, [0, 1]),
-                    $mform->createElement('static', 'documentname_' . $document->id, '',
-                        html_writer::tag('span', s($title), ['class' => 'pdfworkspace-document-filename',
-                            'title' => $document->filename])),
+                    $mform->createElement('static', 'documentname_' . $document->id, '', $label),
                     $mform->createElement('advcheckbox', $include, '', '',
                         ['title' => get_string('workspaceinclude', 'pdfworkspace'),
                             'aria-label' => get_string('workspaceinclude', 'pdfworkspace') . ': ' . $title], [0, 1]),
@@ -116,6 +128,12 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 'data-drag' => get_string('workspacemove', 'pdfworkspace'),
                 'data-order' => get_string('workspaceorder', 'pdfworkspace'), 'aria-live' => 'polite',
             ]));
+            $PAGE->requires->js_call_amd('mod_pdfworkspace/document_settings', 'init', [[
+                'cmid' => $this->context->instanceid,
+                'title' => get_string('documentdeleteaction', 'pdfworkspace'),
+                'warning' => get_string('documentdeletewarning', 'pdfworkspace', '{filename}'),
+                'confirm' => get_string('documentdeleteconfirm', 'pdfworkspace'),
+            ]]);
         }
 
         // Add a filemanager for new uploads only when editing.
@@ -133,6 +151,28 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             'documentsadd' : 'documentsupload', 'pdfworkspace'), null,
             $filemanageroptions); // Params: 1. type of the element, 2. (html) elementname, 3. label.
         $mform->addHelpButton('files', 'documentsupload', 'pdfworkspace');
+        $destinationcmid = $this->current->instance ? (int)$this->context->instanceid : 0;
+        $this->coursefiles = new \mod_pdfworkspace\local\course_documents($this->get_course()->id, $destinationcmid);
+        [$sections, $documents, $groups] = $this->coursefiles->options();
+        if ($documents) {
+            $mform->addElement('autocomplete', 'courseimportsections', get_string('courseimportsections', 'pdfworkspace'),
+                $sections, ['multiple' => true]);
+            $mform->setType('courseimportsections', PARAM_INT);
+            $mform->addHelpButton('courseimportsections', 'courseimportsections', 'pdfworkspace');
+            $individual = $mform->addElement('select', 'courseimportfiles', get_string('courseimportfiles', 'pdfworkspace'),
+                $documents, ['size' => 5]);
+            $individual->setMultiple(true);
+            $mform->setType('courseimportfiles', PARAM_INT);
+            $mform->addHelpButton('courseimportfiles', 'courseimportfiles', 'pdfworkspace');
+            $mform->addElement('static', 'courseimportpicker', '',
+                $OUTPUT->render_from_template('mod_pdfworkspace/course_document_picker', ['sections' => $groups]));
+            $PAGE->requires->js_call_amd('mod_pdfworkspace/course_document_picker', 'init',
+                [get_string('courseimportcount', 'pdfworkspace')]);
+            $mform->addElement('advcheckbox', 'courseimporthide', '', get_string('courseimporthide', 'pdfworkspace'),
+                null, [0, 1]);
+            $mform->addElement('static', 'courseimporthideinfo', '',
+                \mod_pdfworkspace\local\admin_help::field_icon('courseimporthide', 'courseimport'));
+        }
 
         $mform->addElement('header', 'audiencepermissionheader',
             get_string('audiencepermissions', 'pdfworkspace'));
@@ -281,7 +321,13 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
 
         $usercontext = context_user::instance($USER->id);
         $fs = get_file_storage();
-        $draftfiles = $fs->get_area_files($usercontext->id, 'user', 'draft', $data['files'], 'sortorder, id', false);
+        $draftfiles = $fs->get_area_files($usercontext->id, 'user', 'draft', (int)($data['files'] ?? 0), 'sortorder, id', false);
+        $coursefiles = [];
+        try {
+            $coursefiles = $this->coursefiles->select($data['courseimportsections'] ?? [], $data['courseimportfiles'] ?? []);
+        } catch (moodle_exception $exception) {
+            $errors['files'] = $exception->getMessage();
+        }
         $files = $draftfiles ?: [];
         if ($this->current->instance) {
             require_once(__DIR__ . '/locallib.php');
@@ -295,7 +341,12 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 }
                 $remove = !empty($data['removedocument_' . $document->id]);
                 if ($remove && $DB->record_exists('pdfworkspace_annotations', ['documentid' => $document->id])) {
-                    $errors['files'] = get_string('documentannotatedimmutable', 'pdfworkspace', $document->filename);
+                    try {
+                        \mod_pdfworkspace\local\document_removal::require_confirmation($this->context, $document->id,
+                            $data['confirmremovedocument_' . $document->id] ?? '');
+                    } catch (moodle_exception $exception) {
+                        $errors['documentrow_' . $document->id] = $exception->getMessage();
+                    }
                 }
                 if (!$remove) {
                     $kept++;
@@ -307,11 +358,11 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                     $errors['files'] = get_string('documentalreadyexists', 'pdfworkspace', $file->get_filename());
                 }
             }
-            if (!$kept && !$files) {
-                $errors['files'] = get_string('required');
+            if (!$kept && !$files && !$coursefiles) {
+                $errors['files'] ??= get_string('required');
             }
-        } else if (!$files) {
-            $errors['files'] = get_string('required');
+        } else if (!$files && !$coursefiles) {
+            $errors['files'] ??= get_string('required');
             return $errors;
         }
         if (count($files) == 1) {

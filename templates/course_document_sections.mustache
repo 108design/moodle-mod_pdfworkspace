@@ -1,0 +1,64 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle. If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_pdfworkspace/course_document_sections
+
+    Hierarchy of eligible PDF sources in the course.
+
+    Example context (json):
+    {
+        "sections": [{
+            "id": 12,
+            "label": "Reading",
+            "sources": [{"name": "Reading list", "grouped": false, "files": [{"id": 23, "label": "Introduction.pdf"}]}],
+            "sections": []
+        }]
+    }
+}}
+{{#sections}}
+    <details class="mb-2" data-section="{{id}}">
+        <summary>
+            <span class="fw-semibold" data-region="course-pdf-section-name">{{label}}</span>
+            <span class="ms-2 small text-body-secondary" data-region="course-pdf-section-count"></span>
+        </summary>
+        <div class="pdfworkspace-course-branch">
+            {{#sources}}
+                <div data-region="course-pdf-source" data-source-name="{{name}}">
+                    {{#grouped}}
+                        <fieldset class="mb-2 pt-1">
+                            <legend class="float-none w-100 fs-6 mb-1 fw-semibold">
+                                {{name}} <span class="small fw-normal text-body-secondary">({{type}})</span>
+                            </legend>
+                            <div class="pdfworkspace-course-branch">
+                    {{/grouped}}
+                    {{#files}}
+                        <div class="form-check pdfworkspace-course-check" data-region="course-pdf-file">
+                            <input class="form-check-input" id="pdfworkspace-course-file-{{id}}" type="checkbox"
+                                   value="{{id}}" data-action="select-course-pdf">
+                            <label class="form-check-label" for="pdfworkspace-course-file-{{id}}">{{label}}</label>
+                        </div>
+                    {{/files}}
+                    {{#grouped}}
+                            </div>
+                        </fieldset>
+                    {{/grouped}}
+                </div>
+            {{/sources}}
+            {{> mod_pdfworkspace/course_document_sections }}
+        </div>
+    </details>
+{{/sections}}

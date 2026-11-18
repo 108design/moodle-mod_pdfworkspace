@@ -52,6 +52,11 @@ require_course_login($pdfworkspace->course, true, $cm);
 require_capability('mod/pdfworkspace:view', $context);
 require_sesskey();
 
+if (in_array($action, ['create', 'addComment', 'editComment', 'voteComment', 'subscribeQuestion'], true)) {
+    $lock = \mod_pdfworkspace\local\document_removal::lock($pdfworkspace->id);
+    register_shutdown_function([$lock, 'release']);
+}
+
 $documents = pdfworkspace_get_documents($pdfworkspace->id, $context->id);
 $pdfdocid = optional_param('doc', 0, PARAM_INT);
 if (!$pdfdocid && count($documents) === 1) {

@@ -20,6 +20,8 @@
 "/amd/build/admin_help_form.min.js.map" -export-ignore -export-subst
 "/amd/build/admin_help_legacy.min.js" -export-ignore -export-subst
 "/amd/build/admin_help_legacy.min.js.map" -export-ignore -export-subst
+"/amd/build/course_document_picker.min.js" -export-ignore -export-subst
+"/amd/build/course_document_picker.min.js.map" -export-ignore -export-subst
 "/amd/build/document_settings.min.js" -export-ignore -export-subst
 "/amd/build/document_settings.min.js.map" -export-ignore -export-subst
 "/amd/build/jspdf.min.js" -export-ignore -export-subst
@@ -38,6 +40,7 @@
 "/amd/src/admin_help.js" -export-ignore -export-subst
 "/amd/src/admin_help_form.js" -export-ignore -export-subst
 "/amd/src/admin_help_legacy.js" -export-ignore -export-subst
+"/amd/src/course_document_picker.js" -export-ignore -export-subst
 "/amd/src/document_settings.js" -export-ignore -export-subst
 "/amd/src/jspdf.js" -export-ignore -export-subst
 "/amd/src/overview.js" -export-ignore -export-subst
@@ -60,6 +63,8 @@
 "/classes/local/admin_branding.php" -export-ignore -export-subst
 "/classes/local/admin_help.php" -export-ignore -export-subst
 "/classes/local/comment_content.php" -export-ignore -export-subst
+"/classes/local/course_documents.php" -export-ignore -export-subst
+"/classes/local/document_removal.php" -export-ignore -export-subst
 "/classes/local/print_images.php" -export-ignore -export-subst
 "/classes/output" -export-ignore -export-subst
 "/classes/output/answermenu.php" -export-ignore -export-subst
@@ -82,6 +87,7 @@
 "/db/install.xml" -export-ignore -export-subst
 "/db/messages.php" -export-ignore -export-subst
 "/db/upgrade.php" -export-ignore -export-subst
+"/delete_document.php" -export-ignore -export-subst
 "/docs" export-ignore -export-subst
 "/docs/branding" export-ignore -export-subst
 "/docs/branding/logo.svg" export-ignore -export-subst
@@ -381,6 +387,8 @@
 "/templates" -export-ignore -export-subst
 "/templates/add_comment_editor_placeholder.mustache" -export-ignore -export-subst
 "/templates/comment.mustache" -export-ignore -export-subst
+"/templates/course_document_picker.mustache" -export-ignore -export-subst
+"/templates/course_document_sections.mustache" -export-ignore -export-subst
 "/templates/edit_comment_editor_placeholder.mustache" -export-ignore -export-subst
 "/templates/index.mustache" -export-ignore -export-subst
 "/templates/overview_actions.mustache" -export-ignore -export-subst

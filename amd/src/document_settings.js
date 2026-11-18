@@ -20,14 +20,50 @@
  * @copyright 2026 Andreas Giesen <andreas@108design.com>
  * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-/*
- * PDF Workspace document selection and download order.
- * @package   mod_pdfworkspace
- * @copyright 2026 Andreas Giesen <andreas@108design.com>
- * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+import Config from 'core/config';
+import {deleteCancel, exception} from 'core/notification';
+
+/**
+ * Obtain confirmation for this checkbox without changing the activity yet.
+ *
+ * @param {HTMLInputElement} checkbox The removal checkbox.
+ * @param {HTMLInputElement} token The corresponding native form field.
+ * @param {object} settings Labels and the course module ID.
  */
+const confirmRemoval = async(checkbox, token, settings) => {
+    const body = document.createElement('p');
+    body.textContent = settings.warning.replace('{filename}', () => checkbox.dataset.documentFilename);
+    await deleteCancel(settings.title, body.outerHTML, settings.confirm, async() => {
+        checkbox.disabled = true;
+        try {
+            const response = await fetch(Config.wwwroot + '/mod/pdfworkspace/delete_document.php', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    sesskey: Config.sesskey,
+                    id: settings.cmid,
+                    document: checkbox.dataset.documentRemovalId,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.confirmation) {
+                throw new Error(result.message || result.error || response.statusText);
+            }
+            token.value = result.confirmation;
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change', {bubbles: true}));
+        } catch (error) {
+            exception(error);
+        } finally {
+            checkbox.disabled = false;
+            if (checkbox.checked) {
+                checkbox.focus();
+            }
+        }
+    }, null, {triggerElement: checkbox});
+};
+
 let initialised = false;
-export function init() {
+export function init(settings) {
     if (initialised) return;
     initialised = true;
         const region = document.getElementById('id_existingdocuments');
@@ -52,7 +88,6 @@ export function init() {
             const group = filename?.parentElement;
             if (!row || !group) { continue; }
             row.classList.add('pdfworkspace-document-setting');
-            group.classList.add('pdfworkspace-document-row');
             const holder = input.closest('.fitem') === row ? input : input.closest('.fitem');
             const controls = document.createElement('span');
             controls.className = 'pdfworkspace-order-controls';
@@ -61,11 +96,11 @@ export function init() {
             controls.append(input);
             for (const [direction, icon, title] of [
                 ['up', 'arrow-up', labels.dataset.up], ['down', 'arrow-down', labels.dataset.down],
-                ['drag', 'bars', labels.dataset.drag],
+                ['drag', 'arrows', labels.dataset.drag],
             ]) {
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = 'btn btn-outline-secondary btn-sm' + (direction === 'drag' ? ' pdfworkspace-drag' : '');
+                button.className = 'pdfworkspace-order-action' + (direction === 'drag' ? ' pdfworkspace-drag' : '');
                 button.title = title;
                 button.setAttribute('aria-label', title + ': ' + row.querySelector('.pdfworkspace-document-filename').textContent);
                 button.dataset.direction = direction;
@@ -117,11 +152,31 @@ export function init() {
             });
             const remove = row.querySelector('input[type="checkbox"][name^="removedocument_"]');
             const include = row.querySelector('input[type="checkbox"][name^="exportincluded_"]');
+            const grid = document.createElement('div');
+            grid.className = 'pdfworkspace-document-row';
+            group.prepend(grid);
+            // Keep Moodle's feedback and hidden values outside the four visible columns.
+            const checkboxCell = field => field.closest('label, .form-check') || field;
+            grid.append(checkboxCell(remove), filename, checkboxCell(include), controls);
+            const token = remove.dataset.documentRemovalId
+                ? remove.form.elements.namedItem('confirmremovedocument_' + remove.dataset.documentRemovalId) : null;
             function removalState() {
                 row.classList.toggle('pdfworkspace-document-removing', remove.checked);
                 include.disabled = remove.checked;
             }
-            remove.addEventListener('change', removalState);
+            remove.addEventListener('change', () => {
+                if (token && !remove.checked) {
+                    token.value = '';
+                }
+                if (token && remove.checked && !token.value) {
+                    remove.checked = false;
+                    confirmRemoval(remove, token, settings).catch(exception);
+                }
+                removalState();
+            });
+            if (token && !token.value) {
+                remove.checked = false;
+            }
             removalState();
         }
         if (rows().length) { update(false); }
