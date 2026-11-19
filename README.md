@@ -73,6 +73,7 @@ Click a preview to open the full-size screenshot.
 - Configurable visibility for participant and staff annotations.
 - An overview of questions, answers, your own posts and reports.
 - Downloads of original PDFs, comments, annotated PDFs and selected workspace documents.
+- Admin protected PDFs can not be downloaded even from the page source (see notes below)
 
 Supports Moodle 4.5, 5.0, 5.1, 5.2 and 5.3.
 
