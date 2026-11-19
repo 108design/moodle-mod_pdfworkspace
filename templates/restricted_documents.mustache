@@ -1,0 +1,126 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+    @template mod_pdfworkspace/restricted_documents
+    @copyright 2026 Andreas Giesen <andreas@108design.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    List restricted documents and display one server-rendered page.
+    Example context (json):
+    {"documents": [], "renderermissing": false}
+}}
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    {{#addurl}}<a class="btn btn-primary" href="{{addurl}}">{{#str}}restrictedadd, mod_pdfworkspace{{/str}}</a>{{/addurl}}
+    {{{helplink}}}
+</div>
+{{#renderermissing}}
+    <p class="alert alert-info">{{#str}}restrictedrenderersetup, mod_pdfworkspace{{/str}}</p>
+{{/renderermissing}}
+{{^documents}}
+    <p>{{#str}}restrictedempty, mod_pdfworkspace{{/str}}</p>
+{{/documents}}
+{{#documenttitle}}
+    <nav aria-label="{{#str}}restricteddocuments, mod_pdfworkspace{{/str}}" class="mb-3">
+        <ul class="nav nav-pills gap-2">
+            {{#documents}}
+                <li class="nav-item">
+                    <a class="nav-link{{#selected}} active{{/selected}}" href="{{url}}" {{#selected}}aria-current="page"{{/selected}}>{{title}}</a>
+                </li>
+            {{/documents}}
+        </ul>
+    </nav>
+    <h3>{{documenttitle}}</h3>
+    <nav aria-label="{{pagelabel}}" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        {{#previousurl}}
+            <a class="btn btn-secondary" href="{{previousurl}}" rel="prev">{{#str}}previous{{/str}}</a>
+        {{/previousurl}}
+        <span>{{pagelabel}}</span>
+        {{#nexturl}}
+            <a class="btn btn-secondary" href="{{nexturl}}" rel="next">{{#str}}next{{/str}}</a>
+        {{/nexturl}}
+        {{#downloadurl}}
+            <a class="btn btn-secondary" href="{{downloadurl}}">{{#str}}restricteddownload, mod_pdfworkspace{{/str}}</a>
+        {{/downloadurl}}
+        {{#removeurl}}
+            <a class="btn btn-secondary" href="{{removeurl}}">{{#str}}restrictedremove, mod_pdfworkspace{{/str}}</a>
+        {{/removeurl}}
+    </nav>
+    <section data-restricted-markings data-cmid="{{cmid}}" data-document="{{documentid}}" data-page="{{pageno}}"
+        data-markings="{{markings}}" data-saved="{{#str}}restrictedmarksaved, mod_pdfworkspace{{/str}}"
+        data-removed="{{#str}}restrictedmarkremoved, mod_pdfworkspace{{/str}}"
+        data-error="{{#str}}restrictedmarkerror, mod_pdfworkspace{{/str}}"
+        data-empty="{{#str}}restrictedmarkcommentsnone, mod_pdfworkspace{{/str}}"
+        data-delete="{{#str}}delete{{/str}}" data-open="{{#str}}restrictedmarkthread, mod_pdfworkspace{{/str}}">
+        {{#marktoolbar}}
+            <div class="d-flex flex-wrap gap-2 align-items-end mb-2">
+                {{#canmark}}
+                    <button type="button" class="btn btn-secondary" data-mark-tool="frame" aria-pressed="false">
+                        {{#str}}restrictedmarkframe, mod_pdfworkspace{{/str}}
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-mark-tool="point" aria-pressed="false">
+                        {{#str}}restrictedmarkpin, mod_pdfworkspace{{/str}}
+                    </button>
+                    {{#candraw}}
+                        <button type="button" class="btn btn-secondary" data-mark-tool="pen" aria-pressed="false">
+                            {{#str}}restrictedmarkpen, mod_pdfworkspace{{/str}}
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-mark-tool="marker" aria-pressed="false">
+                            {{#str}}restrictedmarkmarker, mod_pdfworkspace{{/str}}
+                        </button>
+                    {{/candraw}}
+                    {{#cantext}}
+                        <button type="button" class="btn btn-secondary" data-mark-tool="text" aria-pressed="false">
+                            {{#str}}restrictedmarktext, mod_pdfworkspace{{/str}}
+                        </button>
+                    {{/cantext}}
+                    <label class="mb-0">
+                        {{#str}}restrictedmarkaudience, mod_pdfworkspace{{/str}}
+                        <select data-mark-audience class="form-select">
+                            {{#audiences}}<option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>{{/audiences}}
+                        </select>
+                    </label>
+                    {{#hasrecipients}}
+                        <label class="mb-0" {{^targeted}}hidden{{/targeted}}>
+                            {{#str}}restrictedmarkrecipient, mod_pdfworkspace{{/str}}
+                            <select data-mark-recipient class="form-select">
+                                <option value="">{{#str}}choosedots{{/str}}</option>
+                                {{#recipients}}<option value="{{id}}">{{name}}</option>{{/recipients}}
+                            </select>
+                        </label>
+                    {{/hasrecipients}}
+                    {{#cantext}}
+                        <label class="mb-0" hidden>
+                            {{#str}}restrictedmarktext, mod_pdfworkspace{{/str}}
+                            <input class="form-control" type="text" maxlength="160" data-mark-text>
+                        </label>
+                    {{/cantext}}
+                {{/canmark}}
+                <button type="button" class="btn btn-secondary" data-mark-remove {{^ownmarkings}}disabled{{/ownmarkings}}>
+                    {{#str}}restrictedmarkremove, mod_pdfworkspace{{/str}}
+                </button>
+            </div>
+        {{/marktoolbar}}
+        <p role="status" class="mb-2"></p>
+        <section class="border rounded p-3 mb-3" data-mark-thread hidden>
+            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">
+                <h4 class="h5 mb-0">{{#str}}restrictedmarkthread, mod_pdfworkspace{{/str}}</h4>
+                <button type="button" class="btn btn-secondary" data-mark-close>{{#str}}closebuttontitle{{/str}}</button>
+            </div>
+            <ul class="list-unstyled" data-mark-comments></ul>
+            {{#cancomment}}
+                <form data-mark-comment>
+                    <label class="d-block">
+                        {{#str}}restrictedmarkcomment, mod_pdfworkspace{{/str}}
+                        <textarea class="form-control" rows="2" maxlength="2000" required></textarea>
+                    </label>
+                    <button type="submit" class="btn btn-primary">{{#str}}restrictedmarkpost, mod_pdfworkspace{{/str}}</button>
+                </form>
+            {{/cancomment}}
+        </section>
+        <figure class="text-center mb-3">
+            <div class="pdfworkspace-restricted-page border">
+                <img src="{{pageimage}}" alt="{{documenttitle}} · {{pagelabel}}" class="img-fluid">
+                <svg class="pdfworkspace-restricted-layer" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+        </figure>
+    </section>
+{{/documenttitle}}

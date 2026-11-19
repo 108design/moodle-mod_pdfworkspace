@@ -61,6 +61,64 @@ body.mod-pdfworkspace-admin-help-page #page.drawers { transition: none; }
     .mod-pdfworkspace-context-help { width: calc(100vw - 2rem); inset-block-end: .5rem; }
 }
 
+/* The tabbed panel shares its header and drawer with contextual help. */
+.mod-pdfworkspace-combined-panel {
+    --mod-pdfworkspace-analysis-width: 26rem;
+}
+.mod-pdfworkspace-combined-panel .mod-pdfworkspace-context-help {
+    width: var(--mod-pdfworkspace-analysis-width);
+}
+.mod-pdfworkspace-combined-panel .mod-pdfworkspace-help-header > h2 {
+    grid-row: 2;
+}
+.mod-pdfworkspace-context-help [role="tabpanel"][hidden],
+.mod-pdfworkspace-panel-backdrop[hidden] { display: none !important; }
+.mod-pdfworkspace-context-help .nav-tabs { margin-block-start: .75rem; }
+.mod-pdfworkspace-context-help .nav-tabs .nav-link {
+    margin-inline: 0;
+    font-size: .875rem;
+    padding-inline: .5rem;
+}
+.mod-pdfworkspace-context-help [role="tabpanel"] {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+}
+.mod-pdfworkspace-context-help [role="tabpanel"] .mod-pdfworkspace-help-choices {
+    padding: 0;
+    margin-block-end: 1rem;
+}
+.mod-pdfworkspace-analysis-actions {
+    display: grid;
+    gap: .5rem;
+}
+.mod-pdfworkspace-panel-backdrop {
+    position: fixed;
+    inset: var(--mod-pdfworkspace-help-top, 4rem) 0 0;
+    background: rgba(0, 0, 0, .25);
+    z-index: 1026;
+}
+@media (min-width: 1400px) {
+    body.mod-pdfworkspace-combined-panel.mod-pdfworkspace-help-open #page.drawers {
+        margin-inline-end: calc(var(--mod-pdfworkspace-analysis-width) + 2rem);
+    }
+}
+@media (min-width: 992px) and (max-width: 1399.98px) {
+    body.mod-pdfworkspace-combined-panel.mod-pdfworkspace-help-open #page.drawers {
+        margin-inline-end: 0;
+    }
+}
+@media (max-width: 991.98px) {
+    .mod-pdfworkspace-combined-panel .mod-pdfworkspace-context-help {
+        inset-inline: .75rem;
+        width: auto;
+        max-width: none;
+    }
+}
+
 /* Context entry is registered by the current page before its header is rendered. */
 .mod-pdfworkspace-help-navbar {
     display: inline-flex;
@@ -155,3 +213,63 @@ body.mod-pdfworkspace-help-legacy-drawers.mod-pdfworkspace-help-open .drawer.dra
 .mod-pdfworkspace-setting-control > :first-child { min-width: 0; max-width: calc(100% - 2rem); flex: 0 1 auto; }
 .mod-pdfworkspace-setting-control > .form-checkbox { flex: 0 1 auto; margin-bottom: 0; }
 .mod-pdfworkspace-setting-control > .mod-pdfworkspace-context-help-icon { flex: 0 0 auto; margin: .25rem 0 0; }
+.pdfworkspace-restricted-page {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+.pdfworkspace-restricted-page img {
+    display: block;
+}
+.pdfworkspace-restricted-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.pdfworkspace-restricted-drawing {
+    pointer-events: auto;
+    touch-action: none;
+    cursor: crosshair;
+}
+.pdfworkspace-restricted-mark {
+    stroke: #215ab6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+.pdfworkspace-restricted-mark[data-markid] {
+    pointer-events: visiblePainted;
+    cursor: pointer;
+}
+.pdfworkspace-restricted-drawing .pdfworkspace-restricted-mark[data-markid] {
+    pointer-events: none;
+}
+.pdfworkspace-restricted-mark[aria-pressed="true"] {
+    filter: drop-shadow(0 0 2px #214a88);
+}
+.pdfworkspace-restricted-marker {
+    stroke: #ffce22;
+    stroke-opacity: .45;
+}
+.pdfworkspace-restricted-point {
+    fill: #215ab6;
+    stroke: #fff;
+}
+.pdfworkspace-restricted-text[data-markid] {
+    pointer-events: auto;
+}
+.pdfworkspace-restricted-note {
+    display: inline-block;
+    background: #f8f4d8;
+    color: #201e18;
+    padding: .15em .3em;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    text-align: start;
+}
+.pdfworkspace-restricted-comment {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

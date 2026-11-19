@@ -70,7 +70,7 @@ export async function init(
     initControls();
     let pdfRenderer;
     try {
-        pdfRenderer = await import(M.cfg.wwwroot + '/mod/pdfworkspace/shared/pdf-renderer.mjs?v=2026092804');
+        pdfRenderer = await import(M.cfg.wwwroot + '/mod/pdfworkspace/shared/pdf-renderer.mjs?v=2026111908');
     } catch (error) {
         console.error('PDF Workspace renderer could not be loaded', error);
         document.getElementById('viewer').textContent = M.util.get_string('error:openingPDF', 'pdfworkspace');
@@ -1544,7 +1544,9 @@ export async function init(
                 let syncStarted = false;
                 function render() {
                     const generation = ++renderGeneration;
-                    pdfDocumentPromise ||= pdfRenderer.loadDocument(RENDER_OPTIONS.documentPath);
+                    pdfDocumentPromise ||= _documentObject.pageimages
+                        ? Promise.resolve(pdfRenderer.loadPageImages(_documentObject.pageimages))
+                        : pdfRenderer.loadDocument(RENDER_OPTIONS.documentPath);
                     return pdfDocumentPromise.then(
                             function fulfilled(pdf) {
                                 RENDER_OPTIONS.pdfDocument = pdf;

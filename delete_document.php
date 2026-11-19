@@ -36,8 +36,12 @@ if (!data_submitted()) {
     throw new moodle_exception('invalidrequest');
 }
 require_sesskey();
-if (!$DB->record_exists('pdfworkspace_documents', ['id' => $documentid, 'pdfworkspaceid' => $cm->instance])
-        || !$DB->record_exists('pdfworkspace_annotations', ['pdfworkspaceid' => $cm->instance, 'documentid' => $documentid])) {
+$document = $DB->get_record('pdfworkspace_documents', ['id' => $documentid, 'pdfworkspaceid' => $cm->instance],
+    'id,restrictedid');
+if ($document && $document->restrictedid) {
+    require_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context);
+}
+if (!$document || !$DB->record_exists('pdfworkspace_annotations', ['pdfworkspaceid' => $cm->instance, 'documentid' => $documentid])) {
     throw new moodle_exception('invaliddocument', 'pdfworkspace');
 }
 $confirmation = random_string(32);

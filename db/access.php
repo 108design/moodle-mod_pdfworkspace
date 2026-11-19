@@ -369,4 +369,17 @@ $capabilities = array(
         ),
     ),
 
+    'mod/pdfworkspace:managerestricteddocuments' => [
+        'riskbitmask' => RISK_DATALOSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [],
+    ],
+
+    'mod/pdfworkspace:downloadrestricteddocuments' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [],
+    ],
 );

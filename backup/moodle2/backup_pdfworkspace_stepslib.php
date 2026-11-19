@@ -104,12 +104,15 @@ class backup_pdfworkspace_activity_structure_step extends backup_activity_struct
         // 4. Define db sources
         // backup::VAR_ACTIVITYID is the 'course module id'.
         $pdfworkspace->set_source_table('pdfworkspace', array('id' => backup::VAR_ACTIVITYID));
-        $document->set_source_table('pdfworkspace_documents', ['pdfworkspaceid' => backup::VAR_PARENTID]);
+        $document->set_source_sql('SELECT d.* FROM {pdfworkspace_documents} d
+                                        WHERE d.pdfworkspaceid = ? AND d.restrictedid IS NULL',
+                [backup::VAR_PARENTID]);
 
         if ($userinfo) {
             // Add all annotations specific to this annotator instance.
-            $annotation->set_source_sql('SELECT a.* FROM {pdfworkspace_annotations} a '
-                                        . 'WHERE a.pdfworkspaceid = ?',
+            $annotation->set_source_sql('SELECT a.* FROM {pdfworkspace_annotations} a
+                    LEFT JOIN {pdfworkspace_documents} d ON d.id = a.documentid
+                        WHERE a.pdfworkspaceid = ? AND d.restrictedid IS NULL',
                                         array('pdfworkspaceid' => backup::VAR_PARENTID));
 
                 // Add any subscriptions to this annotation.

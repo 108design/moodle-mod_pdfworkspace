@@ -181,7 +181,8 @@ class visibility {
         return in_array($question->visibility, ['public', 'anonymous', 'deleted'], true);
     }
 
-    private static function can_view_audience($annotation, $context, $userid) {
+    /** Check the common audience of a regular annotation or a restricted-page drawing. */
+    public static function can_view_audience($annotation, $context, $userid) {
         if (!has_capability('mod/pdfworkspace:view', $context, $userid)) {
             return false;
         }

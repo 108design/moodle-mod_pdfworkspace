@@ -1,3 +1,13 @@
+## 1.22.2 - 2026-11-19
+
+- Protect new PDFs in the usual activity upload. A lock marks protected document tabs.
+  Users can draw and discuss annotations in the viewer. Adding protected PDFs and
+  downloading their originals use separate Moodle permissions.
+- Improve the contrast of the protected-document badge in the activity settings.
+- Document Poppler for protected uploads and the Python environment for combined
+  PDF exports. See [English setup](export/README.md) or
+  [German setup](export/README.de.md).
+
 ## 1.11.0 - 2026-10-25
 
 - Remove obsolete language strings for the retired external formula service. Formula export continues to use the local Moodle TeX renderer.

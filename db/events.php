@@ -23,3 +23,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 defined('MOODLE_INTERNAL') || die();
+
+$observers = [
+    [
+        'eventname' => \core\event\course_deleted::class,
+        'callback' => \mod_pdfworkspace\local\question_analysis::class . '::course_deleted',
+    ],
+];

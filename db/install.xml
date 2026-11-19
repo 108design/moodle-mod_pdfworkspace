@@ -2,7 +2,7 @@
 <!-- Original: Copyright 2018 RWTH Aachen (PDF Annotator).
      Modifications: Copyright 2026 Andreas Giesen <andreas@108design.com>.
      SPDX-License-Identifier: GPL-3.0-or-later. -->
-<XMLDB PATH="mod/pdfworkspace/db" VERSION="20261002" COMMENT="XMLDB file for Moodle mod/pdfworkspace"
+<XMLDB PATH="mod/pdfworkspace/db" VERSION="20261119" COMMENT="XMLDB file for Moodle mod/pdfworkspace"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -28,11 +28,22 @@
         <FIELD NAME="staffaudiences" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="3" SEQUENCE="false"/>
         <FIELD NAME="studentdefaultaudience" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="protected" SEQUENCE="false"/>
         <FIELD NAME="staffdefaultaudience" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="private" SEQUENCE="false"/>
+        <FIELD NAME="aiquestions" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for pdfworkspace"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="pdfworkspace_ai_courses" COMMENT="Course opt-ins for the question analysis pilot">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign-unique" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="pdfworkspace_default_setting" COMMENT="Default settings for pdfworkspace">
@@ -88,6 +99,7 @@
     <TABLE NAME="pdfworkspace_documents" COMMENT="Stable identity and order for PDFs in one activity.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="restrictedid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="pdfworkspaceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="filepath" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="/" SEQUENCE="false"/>
         <FIELD NAME="filename" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
@@ -100,6 +112,55 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="pdfworkspaceid" TYPE="foreign" FIELDS="pdfworkspaceid" REFTABLE="pdfworkspace" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="pdfworkspace_restricted" COMMENT="Restricted PDFs with separately stored original and page images.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pdfworkspaceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="160" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="pagecount" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="pdfworkspaceid" TYPE="foreign" FIELDS="pdfworkspaceid" REFTABLE="pdfworkspace" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="pdfworkspace_rstr_marks" COMMENT="Normalised drawing strokes on restricted page images.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="documentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="page" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="tool" TYPE="char" LENGTH="8" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="label" TYPE="char" LENGTH="160" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="points" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="audience" TYPE="char" LENGTH="12" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="recipientid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="documentid" TYPE="foreign" FIELDS="documentid" REFTABLE="pdfworkspace_restricted" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="recipientid" TYPE="foreign" FIELDS="recipientid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="documentpage" UNIQUE="false" FIELDS="documentid, page"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="pdfworkspace_rstr_comments" COMMENT="Comments on a restricted page marking.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="markid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="markid" TYPE="foreign" FIELDS="markid" REFTABLE="pdfworkspace_rstr_marks" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
     <TABLE NAME="pdfworkspace_annotations" COMMENT="This table saves all the annotations of all the pdfworkspace instances in this Moodle.">

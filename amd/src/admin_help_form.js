@@ -24,9 +24,9 @@
 
 /** Align help in our registered forms without changing fields or their values. */
 export const init = () => {
+    // Position the server-rendered button once. Other plugins may use the same anchor.
     const navigation = document.querySelector('#usernavigation');
-    const alignNavbarHelp = () => {
-        if (!navigation) return;
+    if (navigation) {
         const help = navigation.querySelector('.mod-pdfworkspace-help-navbar');
         const children = [...navigation.children];
         const userMenu = children.find(node => node.matches('[data-region="usermenu"], .usermenu-container'));
@@ -37,10 +37,7 @@ export const init = () => {
         if (help && anchor && (help.parentElement !== navigation || help.nextElementSibling !== anchor)) {
             navigation.insertBefore(help, anchor);
         }
-    };
-    // Navbar callbacks can finish in any order; keep help immediately before the user-area divider.
-    alignNavbarHelp();
-    if (navigation) new MutationObserver(alignNavbarHelp).observe(navigation, {childList: true});
+    }
 
     // Keep linked information beside its native control, retaining labels and defaults.
     document.querySelectorAll('.form-item .form-text .mod-pdfworkspace-context-help-icon').forEach(icon => {
@@ -77,7 +74,7 @@ export const init = () => {
         'audience_student_private', 'audience_student_protected', 'audience_student_public',
         'audience_staff_private', 'audience_staff_targeted', 'audience_staff_public',
         'usevotes', 'use_studenttextbox', 'use_studentdrawing', 'useprint', 'useprintcomments',
-        'usecombineddownload', 'useworkspacedownload', 'useworkspacecomments'];
+        'usecombineddownload', 'useworkspacedownload', 'useworkspacecomments', 'pdfworkspace_aiactivity'];
     fields.forEach(name => {
         const field = document.getElementById('id_' + name);
         const item = field?.closest('.fitem');

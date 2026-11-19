@@ -752,6 +752,10 @@
     font-weight: 500;
     text-decoration: none;
 }
+.pdfworkspace-document-lock {
+    flex: 0 0 auto;
+    margin-inline-end: .4rem;
+}
 .pdfworkspace-documenttab .inplaceeditable {
     display: inline-flex;
     align-items: center;

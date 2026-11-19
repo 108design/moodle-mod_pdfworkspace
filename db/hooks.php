@@ -24,7 +24,16 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-$callbacks = [];
+$callbacks = [
+    [
+        'hook' => \core_course\hook\after_form_definition::class,
+        'callback' => [\mod_pdfworkspace\local\question_settings::class, 'course_form'],
+    ],
+    [
+        'hook' => \core_course\hook\after_form_submission::class,
+        'callback' => [\mod_pdfworkspace\local\question_settings::class, 'save_course_form'],
+    ],
+];
 
 // Decorative product identity is restricted to the native administration surfaces.
 $callbacks[] = [

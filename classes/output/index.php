@@ -59,19 +59,26 @@ class index implements \renderable, \templatable {
         global $USER, $PAGE, $OUTPUT;
         $this->usestudenttextbox = ($pdfworkspace->use_studenttextbox || $capabilities->usetextbox);
         $this->usestudentdrawing = ($pdfworkspace->use_studentdrawing || $capabilities->usedrawing);
-        $this->useprint = ($pdfworkspace->useprint || $capabilities->useprint);
-        $this->useprintcomments = ($pdfworkspace->useprintcomments || $capabilities->useprintcomments);
-        $this->cancombineddownload = pdfworkspace_can_download_combined($pdfworkspace, $PAGE->context);
+        $context = $PAGE->context;
+        $selected = $pdfworkspace->documents[$pdfworkspace->currentdocumentid];
+        $restricted = !empty($selected->restrictedid);
+        $this->useprint = !$restricted && ($pdfworkspace->useprint || $capabilities->useprint);
+        $this->useprintcomments = !$restricted && ($pdfworkspace->useprintcomments || $capabilities->useprintcomments);
+        $this->cancombineddownload = !$restricted && pdfworkspace_can_download_combined($pdfworkspace, $context);
         $this->currentdocumentid = $pdfworkspace->currentdocumentid;
-        $this->printurl = moodle_url::make_pluginfile_url(
-            $file->get_contextid(), $file->get_component(), $file->get_filearea(),
-            $file->get_itemid(), $file->get_filepath(), $file->get_filename(), true)->out(false);
+        if ($this->useprint) {
+            $this->printurl = moodle_url::make_pluginfile_url(
+                $file->get_contextid(), $file->get_component(), $file->get_filearea(),
+                $file->get_itemid(), $file->get_filepath(), $file->get_filename(), true)->out(false);
+        }
         $python = get_config('mod_pdfworkspace', 'exportpython');
         $exportavailable = $python && is_file($python) && is_executable($python) && function_exists('proc_open');
         $menu = new \action_menu();
         $menu->set_menu_trigger(\html_writer::tag('i', '', ['class' => 'fa fa-download', 'aria-hidden' => 'true']) .
             ' ' . s(get_string('downloadmenu', 'pdfworkspace')));
-        $hascurrent = $this->useprint || $this->useprintcomments || ($this->cancombineddownload && $exportavailable);
+        $restricteddownload = $restricted && has_capability(\mod_pdfworkspace\local\restricted_documents::DOWNLOAD, $context);
+        $hascurrent = $restricteddownload || $this->useprint || $this->useprintcomments ||
+            ($this->cancombineddownload && $exportavailable);
         if ($hascurrent) {
             $menu->add_secondary_action(\html_writer::tag('h6', get_string('downloadcurrentpdf', 'pdfworkspace'),
                 ['class' => 'dropdown-header']));
@@ -79,6 +86,13 @@ class index implements \renderable, \templatable {
         if ($this->useprint) {
             $menu->add(new \action_menu_link_secondary(new moodle_url($this->printurl), new \pix_icon('f/pdf', ''),
                 get_string('print', 'pdfworkspace')));
+        }
+        if ($restricteddownload) {
+            $url = new moodle_url('/mod/pdfworkspace/restricted.php', [
+                'id' => $PAGE->cm->id, 'document' => $selected->restrictedid, 'action' => 'download',
+            ]);
+            $menu->add(new \action_menu_link_secondary($url, new \pix_icon('f/pdf', ''),
+                get_string('restricteddownload', 'pdfworkspace')));
         }
         if ($this->useprintcomments) {
             $menu->add(new \action_menu_link_secondary(new moodle_url('#'), new \pix_icon('f/pdf', ''),
@@ -112,17 +126,19 @@ class index implements \renderable, \templatable {
             $this->downloadmenuhtml = $OUTPUT->render($menu);
         }
         $this->documenttabs = [];
-        if (count($pdfworkspace->documents) > 1) {
+        if ($restricted || count($pdfworkspace->documents) > 1) {
             foreach ($pdfworkspace->documents as $document) {
                 $editable = pdfworkspace_document_title_editable($document, $PAGE->cm->id,
-                    has_capability('moodle/course:manageactivities', $PAGE->context));
+                    has_capability('moodle/course:manageactivities', $context) &&
+                    (empty($document->restrictedid) ||
+                        has_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context)));
                 $this->documenttabs[] = [
                     'editablehtml' => $OUTPUT->render($editable),
+                    'protected' => !empty($document->restrictedid),
                     'active' => (int)$document->id === (int)$this->currentdocumentid,
                 ];
             }
         }
-        $context = \context::instance_by_id($file->get_contextid());
         $this->staff = \mod_pdfworkspace\visibility::is_staff($context, $USER->id);
         $allowed = \mod_pdfworkspace\visibility::allowed_audiences($pdfworkspace, $this->staff);
         $role = $this->staff ? 'staff' : 'student';

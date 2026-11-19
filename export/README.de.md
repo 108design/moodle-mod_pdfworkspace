@@ -1,7 +1,57 @@
-# Servereinrichtung für den kombinierten PDF-Download
+# Servereinrichtung für PDF Workspace
 
 PDF Workspace. Copyright 2026 Andreas Giesen <andreas@108design.com>.
 GPL v3 oder neuer.
+
+## Geschützte PDFs einrichten
+
+1. Die Serveradministration installiert Popplers `pdftoppm` auf dem Moodle-Server.
+   Unter [Debian](https://packages.debian.org/stable/poppler-utils) und
+   [Ubuntu](https://packages.ubuntu.com/noble/poppler-utils) gehört es zum Paket
+   `poppler-utils`. Prüfe anschließend den Pfad und die installierte Version.
+
+   ```sh
+   sudo apt install poppler-utils
+   command -v pdftoppm
+   pdftoppm -v
+   ```
+
+2. Die Moodle-Website-Administration trägt den absoluten Pfad, meist
+   `/usr/bin/pdftoppm`, unter **Website-Administration → Plugins → Aktivitäten →
+   PDF Workspace → PDF-Renderer für geschützte Dokumente**
+   (`mod_pdfworkspace/restrictedpdftoppm`) ein.
+3. Prüfe, ob der PHP-Webprozess das Programm mit `proc_open` starten kann. Wenn
+   auf dem Linux-Server `open_basedir` aktiv ist, prüfe in den PHP-Einstellungen
+   der Website den Zugriff auf das Programm, Moodles temporäres Verzeichnis und
+   `/dev/null` für die Standardstreams des Renderers. Lade in einer Testaktivität
+   ein kleines geschütztes PDF hoch und öffne nach dem Speichern die Seiten im Browser.
+
+Verwende in den Aktivitätseinstellungen das normale PDF-Uploadfeld. Setze den
+Haken bei **Alle neu hochgeladenen PDFs schützen** und speichere. Das Kästchen
+gilt für alle neuen Dateien dieses Uploads. Lade reguläre und geschützte PDFs
+in getrennten Schritten hoch und speichere jeweils. Pro geschützter Datei gelten
+150 Seiten und 25 MiB als Obergrenzen.
+
+Moodle erzeugt die JPEG-Seitenbilder beim Speichern. Beim Öffnen fertiger
+Seitenbilder wird Poppler nicht erneut gestartet. Ein Schloss im Dokumenttab
+kennzeichnet das geschützte PDF. Zeichenwerkzeuge und Diskussionen an den
+Markierungen funktionieren im gemeinsamen Viewer. Die Seitenbilder unterstützen
+weder Textauswahl noch PDF-Textsuche. Bildschirmaufnahmen bleiben möglich.
+
+Standardmäßig hat nur die Website-Administration die folgenden Rechte. Du kannst
+sie bei Bedarf getrennt an weitere Rollen vergeben.
+
+- **Geschützte Dokumente anlegen und entfernen**
+  (`mod/pdfworkspace:managerestricteddocuments`)
+- **Originale geschützter Dokumente herunterladen**
+  (`mod/pdfworkspace:downloadrestricteddocuments`). Dieses Recht gilt unabhängig
+  von der regulären Download-Freigabe der Aktivität.
+
+Reguläre Exporte, Kursimporte und portable Moodle-Kurssicherungen lassen
+geschützte Dokumente und ihre Anmerkungen aus. Sichere für ein Server-Backup
+die Moodle-Datenbank und den Moodle-Dateispeicher gemeinsam.
+
+## Kombinierte PDF-Downloads
 
 Die normale PDF-Ansicht, der Original-PDF-Download und der reine Kommentar-Download
 benötigen kein Python. Für PDFs mit Markierungen und Kommentaren sowie für den
@@ -10,8 +60,10 @@ Python 3.11 oder neuer, das Modul `venv` sowie pypdf, ReportLab und die
 AES-Unterstützung durch cryptography. Auf Debian/Ubuntu wird das Venv-Modul
 üblicherweise über das Betriebssystempaket `python3-venv` bereitgestellt.
 
-Für den Workspace-Download legt der bearbeitende Dozent in der PDF-Liste der
-Aktivitätseinstellungen fest, welche Dateien in welcher Reihenfolge enthalten sind.
+Der Einzeldownload kombiniert ein reguläres PDF mit den sichtbaren Markierungen
+und Kommentaren. Für den Workspace-Download legst Du in der PDF-Liste der
+Aktivitätseinstellungen fest, welche regulären Dateien in welcher Reihenfolge
+zusammengeführt werden.
 Die Tab-Reihenfolge bleibt unabhängig davon. Beide Varianten nutzen diese Auswahl;
 mit Kommentaren werden ausschließlich die für den herunterladenden Nutzer sichtbaren
 Markierungen und Kommentare aufgenommen. PDF-Lesezeichen tragen die Dokumentnamen.
@@ -31,9 +83,12 @@ kann ein Symlink nach `/usr/bin/python` die Datei- und Zugriffsprüfung des Plug
 verhindern. Der Venv-Pfad muss innerhalb der für PHP erlaubten Verzeichnisse liegen;
 die Beschränkung sollte dafür nicht global gelockert werden.
 
-Beispiel für Server-Admins; passe die absoluten Pfade an Deine Installation an:
+Prüfe als Server-Admin zuerst, ob `python3` mindestens Version 3.11 hat.
+Passe beide absoluten Pfade an Deine Installation an. Bei Moodle mit separatem
+Webverzeichnis führt der Pluginpfad über `public/mod/pdfworkspace`.
 
 ```sh
+python3 --version
 python3 -m venv --copies /srv/pdfworkspace-export/venv
 /srv/pdfworkspace-export/venv/bin/python -m pip install -r /absoluter/pfad/zu/moodle/mod/pdfworkspace/export/requirements.txt
 /srv/pdfworkspace-export/venv/bin/python -m pip check

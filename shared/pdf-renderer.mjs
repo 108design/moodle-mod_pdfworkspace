@@ -42,7 +42,62 @@ export function loadDocument(url) {
     }).promise;
 }
 
+/**
+ * Supply on-demand JPEG pages to the regular canvas and annotation layer.
+ *
+ * @param {string[]} urls Authenticated, activity-scoped page URLs
+ * @returns {{numPages: number, getPage: function}}
+ */
+export function loadPageImages(urls) {
+    const pages = new Map();
+    return {
+        numPages: urls.length,
+        getPage(number) {
+            if (!pages.has(number)) {
+                const image = new Image();
+                image.src = urls[number - 1];
+                const page = image.decode().then(() => {
+                    // Use the same logical width at every zoom and on every device.
+                    const width = 595;
+                    const height = width * image.naturalHeight / image.naturalWidth;
+                    return {
+                        imageOnly: true,
+                        rotate: 0,
+                        getViewport({scale, rotation = 0}) {
+                            const sideways = rotation % 180 !== 0;
+                            return {
+                                width: (sideways ? height : width) * scale,
+                                height: (sideways ? width : height) * scale,
+                                userUnit: 1, scale, rotation,
+                            };
+                        },
+                        render({canvasContext, viewport, transform}) {
+                            const promise = Promise.resolve().then(() => {
+                                canvasContext.save();
+                                canvasContext.setTransform(...transform);
+                                canvasContext.translate(viewport.width / 2, viewport.height / 2);
+                                canvasContext.rotate(viewport.rotation * Math.PI / 180);
+                                const w = width * viewport.scale;
+                                const h = height * viewport.scale;
+                                canvasContext.drawImage(image, -w / 2, -h / 2, w, h);
+                                canvasContext.restore();
+                            });
+                            return {promise};
+                        },
+                    };
+                });
+                pages.set(number, page);
+                page.catch(() => pages.delete(number));
+            }
+            return pages.get(number);
+        },
+    };
+}
+
 export async function renderTextLayer(page, container, viewport) {
+    if (page.imageOnly) {
+        return;
+    }
     const layer = new TextLayer({
         textContentSource: page.streamTextContent(),
         container,

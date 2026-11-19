@@ -41,7 +41,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         \mod_pdfworkspace\local\admin_help::register_activity_settings();
         $mform =& $this->_form;
         $config = get_config('mod_pdfworkspace');
-        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026111804-1']));
+        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026111910']));
         $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -64,12 +64,14 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         $attributes['rows'] = 5;
         $element->setAttributes($attributes);
 
+        $canprotect = has_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $this->context);
         // Existing PDFs stay outside the editable draft area.
         if ($this->current->instance) {
             require_once(__DIR__ . '/locallib.php');
-            $documents = pdfworkspace_get_documents($this->current->instance, $this->context->id);
+            $documents = pdfworkspace_get_view_documents($this->current->instance, $this->context->id);
             uasort($documents, static function($a, $b) {
-                return [$a->exportorder, $a->sortorder, $a->id] <=> [$b->exportorder, $b->sortorder, $b->id];
+                return [(bool)$a->restrictedid, $a->exportorder, $a->sortorder, $a->id]
+                    <=> [(bool)$b->restrictedid, $b->exportorder, $b->sortorder, $b->id];
             });
             $mform->addElement('header', 'existingdocuments', get_string('documentsupload', 'pdfworkspace'));
             $trash = html_writer::tag('span', '', ['class' => 'fa fa-trash', 'aria-hidden' => 'true']);
@@ -83,6 +85,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             $candeleteannotated = has_capability('mod/pdfworkspace:deleteannotateddocument', $this->context);
             $position = 0;
             foreach ($documents as $document) {
+                $restricted = !empty($document->restrictedid);
                 $hasannotations = $DB->record_exists('pdfworkspace_annotations', ['documentid' => $document->id]);
                 $title = $document->displayname ?: $document->filename;
                 $action = get_string($hasannotations && !$candeleteannotated ? 'documentlockedshort' : 'removedocument',
@@ -94,7 +97,14 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 $order = 'exportorder_' . $document->id;
                 $label = html_writer::tag('span', s($title), ['class' => 'pdfworkspace-document-filename',
                     'title' => $document->filename]);
-                if ($hasannotations) {
+                if ($restricted) {
+                    $label = html_writer::span($label . ' ' .
+                        html_writer::span(get_string('restrictedbadge', 'pdfworkspace'), 'badge pdfworkspace-protected-badge'),
+                        'pdfworkspace-protected-name');
+                }
+                if ($restricted && !$canprotect) {
+                    $attributes['disabled'] = 'disabled';
+                } else if ($hasannotations) {
                     if ($candeleteannotated) {
                         $attributes['data-document-removal-id'] = $document->id;
                         $attributes['data-document-filename'] = $document->filename;
@@ -108,19 +118,26 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 $elements = [
                     $mform->createElement('advcheckbox', $remove, '', '', $attributes, [0, 1]),
                     $mform->createElement('static', 'documentname_' . $document->id, '', $label),
-                    $mform->createElement('advcheckbox', $include, '', '',
-                        ['title' => get_string('workspaceinclude', 'pdfworkspace'),
-                            'aria-label' => get_string('workspaceinclude', 'pdfworkspace') . ': ' . $title], [0, 1]),
-                    $mform->createElement('text', $order, '', ['type' => 'number', 'min' => 1,
-                        'max' => count($documents), 'size' => 3,
-                        'aria-label' => get_string('workspaceorder', 'pdfworkspace') . ': ' . $title]),
                 ];
+                if ($restricted) {
+                    $elements[] = $mform->createElement('static', $include, '', '&nbsp;');
+                    $elements[] = $mform->createElement('static', $order, '', '&nbsp;');
+                } else {
+                    $elements[] = $mform->createElement('advcheckbox', $include, '', '',
+                        ['title' => get_string('workspaceinclude', 'pdfworkspace'),
+                            'aria-label' => get_string('workspaceinclude', 'pdfworkspace') . ': ' . $title], [0, 1]);
+                    $elements[] = $mform->createElement('text', $order, '', ['type' => 'number', 'min' => 1,
+                        'max' => count($documents), 'size' => 3,
+                        'aria-label' => get_string('workspaceorder', 'pdfworkspace') . ': ' . $title]);
+                }
                 $mform->addGroup($elements, 'documentrow_' . $document->id, '', '', false);
                 $mform->setType($remove, PARAM_BOOL);
-                $mform->setType($include, PARAM_BOOL);
-                $mform->setType($order, PARAM_INT);
-                $mform->setDefault($include, (int)$document->exportincluded);
-                $mform->setDefault($order, ++$position);
+                if (!$restricted) {
+                    $mform->setType($include, PARAM_BOOL);
+                    $mform->setType($order, PARAM_INT);
+                    $mform->setDefault($include, (int)$document->exportincluded);
+                    $mform->setDefault($order, ++$position);
+                }
             }
             $mform->addElement('static', 'workspaceexplanation', '', get_string('workspacefiles_help', 'pdfworkspace'));
             $mform->addElement('static', 'workspaceorderlabels', '', html_writer::div('', 'pdfworkspace-order-labels', [
@@ -151,6 +168,29 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             'documentsadd' : 'documentsupload', 'pdfworkspace'), null,
             $filemanageroptions); // Params: 1. type of the element, 2. (html) elementname, 3. label.
         $mform->addHelpButton('files', 'documentsupload', 'pdfworkspace');
+        // Retain submitted intent if the user's capability changed while the form was open.
+        $mform->addElement('hidden', 'protecteduploads', '');
+        $mform->setType('protecteduploads', PARAM_RAW);
+        if ($canprotect) {
+            $ready = \mod_pdfworkspace\local\restricted_renderer::executable() !== '';
+            $checkbox = html_writer::empty_tag('input', [
+                'type' => 'checkbox', 'class' => 'form-check-input',
+                'id' => 'pdfworkspace-protect-upload', 'disabled' => 'disabled',
+                'aria-describedby' => $ready ? null : 'pdfworkspace-protect-unavailable',
+            ]);
+            $label = html_writer::label(get_string('restricteduploadcheck', 'pdfworkspace'), 'pdfworkspace-protect-upload');
+            $protection = html_writer::div(
+                $checkbox . $label . \mod_pdfworkspace\local\admin_help::icon('restrictedupload'),
+                'pdfworkspace-protected-upload', ['data-pdfworkspace-protected-uploads' => (int)$ready]);
+            if (!$ready) {
+                $protection .= html_writer::div(get_string('restrictedrenderersetup', 'pdfworkspace'), 'form-text',
+                    ['id' => 'pdfworkspace-protect-unavailable']);
+            }
+            $mform->addElement('static', 'documentprotection', get_string('restricteduploadlabel', 'pdfworkspace'),
+                $protection);
+            $mform->addHelpButton('documentprotection', 'restricteduploadlabel', 'pdfworkspace');
+            $PAGE->requires->js_call_amd('mod_pdfworkspace/document_settings', 'initProtectedUploads');
+        }
         $destinationcmid = $this->current->instance ? (int)$this->context->instanceid : 0;
         $this->coursefiles = new \mod_pdfworkspace\local\course_documents($this->get_course()->id, $destinationcmid);
         [$sections, $documents, $groups] = $this->coursefiles->options();
@@ -272,6 +312,9 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 RESOURCELIB_LEGACYFILES_ACTIVE => get_string('legacyfilesactive', 'pdfworkspace'));
             $mform->addElement('select', 'legacyfiles', get_string('legacyfiles', 'pdfworkspace'), $options);
         }
+        if ($this->current->instance) {
+            \mod_pdfworkspace\local\question_settings::activity_form($mform, $this->context, (int)$this->current->instance);
+        }
         $this->standard_coursemodule_elements();
 
         $this->add_action_buttons();
@@ -329,17 +372,27 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             $errors['files'] = $exception->getMessage();
         }
         $files = $draftfiles ?: [];
+        try {
+            pdfworkspace_protected_uploads((string)($data['protecteduploads'] ?? ''), $files, $this->context);
+        } catch (moodle_exception $exception) {
+            $field = $this->_form->elementExists('documentprotection') ? 'documentprotection' : 'files';
+            $errors[$field] = $exception->getMessage();
+        }
         if ($this->current->instance) {
             require_once(__DIR__ . '/locallib.php');
-            $documents = pdfworkspace_get_documents($this->current->instance, $this->context->id);
+            $documents = pdfworkspace_get_view_documents($this->current->instance, $this->context->id);
             $kept = 0;
             $names = [];
             foreach ($documents as $document) {
                 $order = $data['exportorder_' . $document->id] ?? 0;
-                if ($order < 1 || $order > count($documents)) {
+                if (empty($document->restrictedid) && ($order < 1 || $order > count($documents))) {
                     $errors['documentrow_' . $document->id] = get_string('error:workspaceorder', 'pdfworkspace');
                 }
                 $remove = !empty($data['removedocument_' . $document->id]);
+                if ($remove && !empty($document->restrictedid) && !has_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $this->context)) {
+                    $errors['documentrow_' . $document->id] = get_string('nopermissions', 'error',
+                        get_string('restricteduploadlabel', 'pdfworkspace'));
+                }
                 if ($remove && $DB->record_exists('pdfworkspace_annotations', ['documentid' => $document->id])) {
                     try {
                         \mod_pdfworkspace\local\document_removal::require_confirmation($this->context, $document->id,

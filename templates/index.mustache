@@ -35,7 +35,7 @@ File documentation for templates/index.mustache.
     {{#hasdocumenttabs}}
     <nav class="pdfworkspace-documenttabs" aria-label="{{#str}}documenttabs,pdfworkspace{{/str}}">
         {{#documenttabs}}
-        <span class="pdfworkspace-documenttab{{#active}} is-active{{/active}}"{{#active}} aria-current="page"{{/active}}>{{{editablehtml}}}</span>
+        <span class="pdfworkspace-documenttab{{#active}} is-active{{/active}}"{{#active}} aria-current="page"{{/active}}>{{#protected}}<i class="fa fa-lock pdfworkspace-document-lock" aria-hidden="true"></i><span class="visually-hidden">{{#str}}restrictedbadge,pdfworkspace{{/str}} </span>{{/protected}}{{{editablehtml}}}</span>
         {{/documenttabs}}
     </nav>
     {{/hasdocumenttabs}}

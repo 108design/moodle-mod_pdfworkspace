@@ -127,11 +127,13 @@ function pdfworkspace_add_instance($data, $mform) {
     require_once("$CFG->dirroot/mod/pdfworkspace/locallib.php");
     $cmid = $data->coursemodule;
     [$catalogue, $coursefiles] = pdfworkspace_resolve_course_documents($data);
-    $transaction = $coursefiles ? $DB->start_delegated_transaction() : null;
+    $transaction = ($coursefiles || !empty($data->protecteduploads)) ? $DB->start_delegated_transaction() : null;
     $data->timemodified = time();
     pdfworkspace_set_allowed_audiences($data);
     pdfworkspace_set_display_options($data);
 
+    // Activity creation always starts with an explicit opt-in still pending.
+    $data->aiquestions = 0;
     $data->id = $DB->insert_record('pdfworkspace', $data);
 
     // We need to use context now, so we need to make sure all needed info is already in db.
@@ -175,6 +177,7 @@ function pdfworkspace_update_instance($data, $mform) {
         }
     }
     $data->id = $data->instance;
+    \mod_pdfworkspace\local\question_settings::prepare_activity_update($data);
     $data->revision++;
 
     pdfworkspace_set_display_options($data); // Can be deleted or extended.
@@ -182,7 +185,7 @@ function pdfworkspace_update_instance($data, $mform) {
     $lock = \mod_pdfworkspace\local\document_removal::lock($data->id);
     $transaction = null;
     try {
-        $transaction = ($coursefiles || $removedocumentids) ? $DB->start_delegated_transaction() : null;
+        $transaction = ($coursefiles || $removedocumentids || !empty($data->protecteduploads)) ? $DB->start_delegated_transaction() : null;
         $DB->update_record('pdfworkspace', $data);
         pdfworkspace_set_mainfile($data, $removedocumentids, $coursefiles, $removalconfirmations);
         pdfworkspace_save_workspace_selection($data);
@@ -261,6 +264,9 @@ function pdfworkspace_inplace_editable($itemtype, $itemid, $newvalue) {
     $context = context_module::instance($cm->id);
     \core_external\external_api::validate_context($context);
     require_capability('moodle/course:manageactivities', $context);
+    if (!empty($document->restrictedid)) {
+        require_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context);
+    }
     $title = trim(clean_param($newvalue, PARAM_TEXT));
     if ($title === '' || core_text::strlen($title) > 80) {
         throw new invalid_parameter_exception(get_string('error:documenttitle', 'pdfworkspace'));
@@ -314,6 +320,15 @@ function pdfworkspace_delete_instance($id) {
         return false;
     }
     $DB->delete_records('pdfworkspace_documents', ['pdfworkspaceid' => $id]);
+    foreach (\mod_pdfworkspace\local\restricted_documents::listing($id) as $document) {
+        $lock = \mod_pdfworkspace\local\restricted_documents::lock($document->id);
+        try {
+            \mod_pdfworkspace\local\restricted_markings::delete_document($document->id);
+            $DB->delete_records(\mod_pdfworkspace\local\restricted_documents::TABLE, ['id' => $document->id]);
+        } finally {
+            $lock->release();
+        }
+    }
 
     // 2.a) Get all comments in this annotator.
     $comments = $DB->get_records('pdfworkspace_comments', ['pdfworkspaceid' => $id]);
@@ -477,6 +492,19 @@ function pdfworkspace_pluginfile($course, $cm, $context, $filearea, $args, $forc
     require_course_login($course, true, $cm);
     if (!has_capability('mod/pdfworkspace:view', $context)) {
         return false;
+    }
+
+    if ($filearea === \mod_pdfworkspace\local\restricted_documents::PAGE) {
+        if (count($args) !== 2 || !ctype_digit((string)$args[0])) {
+            return false;
+        }
+        $file = \mod_pdfworkspace\local\restricted_documents::page_file($context, $cm->instance, (int)$args[0], $args[1]);
+        if (!$file) {
+            return false;
+        }
+        // Only raster previews are available through this callback. Originals use a capability-gated endpoint.
+        send_stored_file($file, 0, 0, false);
+        return true;
     }
 
     if ($filearea !== 'content' && $filearea !== 'post') {

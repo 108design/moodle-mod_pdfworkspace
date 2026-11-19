@@ -39,6 +39,11 @@ if ($ADMIN->fulltree) {
         get_string('combinedexportpython', 'pdfworkspace'),
         get_string('combinedexportpython_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('exports'), '', PARAM_RAW_TRIMMED));
 
+    $settings->add(new admin_setting_configtext('mod_pdfworkspace/restrictedpdftoppm',
+        get_string('restrictedrenderer', 'mod_pdfworkspace'),
+        get_string('restrictedrenderer_desc', 'mod_pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('restrictedsetup'),
+        '', PARAM_RAW_TRIMMED));
+
     $settings->add(new admin_setting_configcheckbox('mod_pdfworkspace/use_studenttextbox',
             get_string('global_setting_use_studenttextbox', 'pdfworkspace'),
             get_string('global_setting_use_studenttextbox_desc', 'pdfworkspace') . \mod_pdfworkspace\local\admin_help::icon('overview'), 0));

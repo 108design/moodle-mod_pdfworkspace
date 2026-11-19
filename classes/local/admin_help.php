@@ -29,11 +29,40 @@ defined('MOODLE_INTERNAL') || die();
 /** Contextual settings help, following the standalone Frontpage panel contract. */
 final class admin_help {
     private const TOPICS = ['overview', 'exports', 'courseoverview', 'viewer', 'downloads', 'discussion', 'moderation',
-        'activityoverview', 'activitysettings', 'questiondashboard', 'recentanswers', 'courseimport'];
+        'activityoverview', 'activitysettings', 'questiondashboard', 'recentanswers', 'courseimport', 'aipilot',
+        'restricteddocuments', 'restrictedupload', 'restrictedsetup'];
     private static array $topics = ['overview', 'exports'];
     private static string $titlekey = 'adminhelp';
     private static bool $prepared = false;
     private static bool $activitysettings = false;
+    private static bool $analysissettings = false;
+    private static bool $analysis = false;
+
+    /** Register the pilot settings page after checking access. */
+    public static function register_analysis_settings(): void {
+        self::$analysissettings = true;
+    }
+
+    /** Render the direct panel opener and the settings link on the questions overview. */
+    public static function analysis_controls(\context_module $context): string {
+        $controls = '';
+        if (self::$analysis) {
+            $icon = \html_writer::tag('i', '', ['class' => 'fa fa-wand-magic-sparkles me-1', 'aria-hidden' => 'true']);
+            $label = get_string('aiquestions_open', 'mod_pdfworkspace');
+            $controls .= \html_writer::tag('button', $icon . $label, [
+                'type' => 'button', 'class' => 'btn btn-primary',
+                'data-pdfworkspace-help-open' => '', 'data-pdfworkspace-help-view' => 'analysis',
+                'aria-controls' => 'mod-pdfworkspace-context-help', 'aria-expanded' => 'false',
+            ]);
+            $controls .= self::icon('aipilot');
+        }
+        if (in_array('aipilot', self::$topics, true) && question_analysis::can_configure($context)) {
+            $url = new \moodle_url('/mod/pdfworkspace/ai_settings.php', ['id' => $context->instanceid]);
+            $controls .= \html_writer::link($url, get_string('aiquestions_settings', 'mod_pdfworkspace'),
+                ['class' => 'btn btn-link']);
+        }
+        return $controls === '' ? '' : \html_writer::div($controls, 'd-flex flex-wrap align-items-center gap-2 mb-3');
+    }
 
     /** Called only by this activity's native edit form. */
     public static function register_activity_settings(): void {
@@ -60,19 +89,34 @@ final class admin_help {
         $activitysettings = self::$activitysettings
             && $PAGE->url->get_path() === (new \moodle_url('/course/modedit.php'))->get_path()
             && has_capability('moodle/course:manageactivities', $PAGE->context);
-        if (!$courseindex && !$activityview && !$activitysettings && admin_branding::page_capability() === null) {
+        if (!$courseindex && !$activityview && !$activitysettings && !self::$analysissettings
+                && admin_branding::page_capability() === null) {
             return;
         }
-        self::$topics = $courseindex ? ['courseoverview'] : ['overview', 'exports'];
+        self::$topics = $courseindex ? ['courseoverview'] : ['overview', 'exports', 'restrictedsetup'];
+        if (self::$analysissettings) {
+            self::$topics = ['aipilot'];
+        }
         if ($activityview) {
             self::$topics = ['viewer', 'activityoverview', 'discussion', 'downloads'];
-            $action = optional_param('action', '', PARAM_ALPHA);
-            if (str_starts_with($action, 'overview') || $action === 'statistic') {
+            $action = \pdfworkspace_request_action();
+            if (str_starts_with($action, 'overview')) {
                 self::$topics = ['activityoverview', 'viewer', 'discussion', 'downloads'];
             }
             if (has_capability('mod/pdfworkspace:viewquestions', $PAGE->context)
                     && \mod_pdfworkspace\visibility::is_staff($PAGE->context, $USER->id)) {
                 self::$topics[] = 'questiondashboard';
+            }
+            if ($action === 'overviewquestions' && question_analysis::site_enabled()) {
+                $enabled = question_analysis::available_manager($PAGE->context) !== null;
+                if ($enabled || question_analysis::can_configure($PAGE->context)) {
+                    self::$topics[] = 'aipilot';
+                }
+                if ($enabled) {
+                    self::$analysis = true;
+                    $PAGE->add_body_class('mod-pdfworkspace-combined-panel');
+                    $PAGE->requires->js_call_amd('mod_pdfworkspace/question_analysis', 'init');
+                }
             }
             if (has_capability('mod/pdfworkspace:viewanswers', $PAGE->context)) {
                 self::$topics[] = 'recentanswers';
@@ -81,11 +125,22 @@ final class admin_help {
                     'mod/pdfworkspace:viewreports'], $PAGE->context)) {
                 self::$topics[] = 'moderation';
             }
+            if (restricted_documents::listing($PAGE->cm->instance)) {
+                self::$topics[] = 'restricteddocuments';
+            }
         }
         if ($activitysettings) {
             self::$topics = ['activitysettings', 'courseimport', 'discussion', 'downloads'];
+            if (has_capability(restricted_documents::MANAGE, $PAGE->context)) {
+                self::$topics[] = 'restrictedupload';
+                self::$topics[] = 'restrictedsetup';
+            }
+            if (question_analysis::site_enabled()) {
+                self::$topics[] = 'aipilot';
+            }
         }
-        self::$titlekey = $courseindex || $activityview || $activitysettings ? 'activityhelp' : 'adminhelp';
+        self::$titlekey = $courseindex || $activityview || $activitysettings || self::$analysissettings
+            ? 'activityhelp' : 'adminhelp';
         $PAGE->add_body_class('mod-pdfworkspace-admin-help-page');
         self::$prepared = true;
         $PAGE->requires->css(new \moodle_url('/mod/pdfworkspace/styles/admin_help.css', [
@@ -174,12 +229,40 @@ final class admin_help {
             'class' => 'mod-pdfworkspace-help-brand', 'role' => 'img', 'aria-label' => '108design',
             'title' => '108design', 'tabindex' => '0', 'data-toggle' => 'tooltip', 'data-bs-toggle' => 'tooltip',
         ]);
-        $header = \html_writer::tag('header', \html_writer::tag('h2', $title, [
-            'id' => 'mod-pdfworkspace-context-help-title', 'class' => 'sr-only visually-hidden', 'tabindex' => '-1',
-        ]) . \html_writer::div($choice, 'mod-pdfworkspace-help-choices') . $brand . $close,
-            ['class' => 'mod-pdfworkspace-help-header mod-pdfworkspace-help-header-branded']);
-        return \html_writer::tag('aside', $header
-            . \html_writer::div($articles, 'mod-pdfworkspace-help-content', ['tabindex' => '0']), [
+        if (self::$analysis) {
+            $header = \html_writer::tag('header', \html_writer::tag('h2', get_string('pluginname', 'mod_pdfworkspace'), [
+                'id' => 'mod-pdfworkspace-context-help-title', 'class' => 'h6 mb-0', 'tabindex' => '-1',
+            ]) . $brand . $close, ['class' => 'mod-pdfworkspace-help-header mod-pdfworkspace-help-header-branded']);
+            $tabs = '';
+            foreach (['analysis' => 'aiquestions', 'help' => 'adminhelp_helptab'] as $tab => $label) {
+                $selected = $tab === 'help';
+                $tabs .= \html_writer::tag('button', get_string($label, 'mod_pdfworkspace'), [
+                    'type' => 'button', 'id' => 'mod-pdfworkspace-tab-' . $tab,
+                    'class' => 'nav-link' . ($selected ? ' active' : ''),
+                    'role' => 'tab', 'data-pdfworkspace-panel-tab' => $tab,
+                    'aria-controls' => 'mod-pdfworkspace-panel-' . $tab,
+                    'aria-selected' => $selected ? 'true' : 'false', 'tabindex' => $selected ? 0 : -1,
+                ]);
+            }
+            $header .= \html_writer::div($tabs, 'nav nav-tabs nav-fill px-3 flex-nowrap', [
+                'role' => 'tablist', 'aria-labelledby' => 'mod-pdfworkspace-context-help-title',
+            ]);
+            $content = \html_writer::div(question_analysis::panel(), 'mod-pdfworkspace-analysis-content', [
+                'id' => 'mod-pdfworkspace-panel-analysis', 'role' => 'tabpanel',
+                'aria-labelledby' => 'mod-pdfworkspace-tab-analysis', 'tabindex' => '0', 'hidden' => 'hidden',
+            ]) . \html_writer::div(\html_writer::div($choice, 'mod-pdfworkspace-help-choices') . $articles,
+                'mod-pdfworkspace-help-content', [
+                    'id' => 'mod-pdfworkspace-panel-help', 'role' => 'tabpanel',
+                    'aria-labelledby' => 'mod-pdfworkspace-tab-help', 'tabindex' => '0',
+                ]);
+        } else {
+            $header = \html_writer::tag('header', \html_writer::tag('h2', $title, [
+                'id' => 'mod-pdfworkspace-context-help-title', 'class' => 'sr-only visually-hidden', 'tabindex' => '-1',
+            ]) . \html_writer::div($choice, 'mod-pdfworkspace-help-choices') . $brand . $close,
+                ['class' => 'mod-pdfworkspace-help-header mod-pdfworkspace-help-header-branded']);
+            $content = \html_writer::div($articles, 'mod-pdfworkspace-help-content', ['tabindex' => '0']);
+        }
+        return \html_writer::tag('aside', $header . $content, [
                 'id' => 'mod-pdfworkspace-context-help', 'class' => 'mod-pdfworkspace-context-help',
                 'aria-labelledby' => 'mod-pdfworkspace-context-help-title', 'hidden' => 'hidden',
                 'data-pdfworkspace-help-url' => $PAGE->url->out(false),

@@ -65,13 +65,19 @@ function pdfworkspace_display_embed($pdfworkspace, $cm, $course, $file, $page = 
     $pdfworkspace->revision = 1;
 
     $context = context_module::instance($cm->id);
-    $path = '/' . $context->id . '/mod_pdfworkspace/content/' . $pdfworkspace->revision . $file->get_filepath() . $file->get_filename();
-    $fullurl = file_encode_url($CFG->wwwroot . '/pluginfile.php', $path, false);
-
+    $selected = $pdfworkspace->documents[$pdfworkspace->currentdocumentid];
     $documentobject = new stdClass();
     $documentobject->annotatorid = $pdfworkspace->id;
-    $documentobject->pdfdocid = $pdfworkspace->currentdocumentid;
-    $documentobject->fullurl = $fullurl;
+    $documentobject->pdfdocid = $selected->id;
+    if (!empty($selected->restrictedid)) {
+        $documentobject->pageimages = \mod_pdfworkspace\local\restricted_documents::page_urls($context, $pdfworkspace->id,
+            $selected->restrictedid);
+        $page = min(max(1, $page), count($documentobject->pageimages));
+    } else {
+        $path = '/' . $context->id . '/mod_pdfworkspace/content/' . $pdfworkspace->revision .
+            $file->get_filepath() . $file->get_filename();
+        $documentobject->fullurl = file_encode_url($CFG->wwwroot . '/pluginfile.php', $path, false);
+    }
 
     $stringman = get_string_manager();
     // With this method you get the strings of the language-Files.
@@ -731,7 +737,7 @@ function pdfworkspace_can_download_workspace($activity, $context, $withcomments 
 /** Return only included documents, in their independently stored export order. */
 function pdfworkspace_workspace_documents($activityid) {
     global $DB;
-    return $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid, 'exportincluded' => 1],
+    return $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid, 'exportincluded' => 1, 'restrictedid' => null],
         'exportorder ASC, sortorder ASC, id ASC');
 }
 
@@ -740,7 +746,7 @@ function pdfworkspace_save_workspace_selection($data) {
     global $DB;
     $context = context_module::instance($data->coursemodule);
     require_capability('moodle/course:manageactivities', $context);
-    $documents = $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $data->id]);
+    $documents = $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $data->id, 'restrictedid' => null]);
     $ordered = [];
     foreach ($documents as $document) {
         $field = 'exportorder_' . $document->id;
@@ -767,7 +773,7 @@ function pdfworkspace_save_workspace_selection($data) {
 /** Return the PDFs in their stable tab order, repairing old backups without document rows. */
 function pdfworkspace_get_documents($activityid, $contextid) {
     global $DB;
-    $documents = $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid],
+    $documents = $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid, 'restrictedid' => null],
         'sortorder ASC, id ASC');
     if ($documents) {
         $first = reset($documents);
@@ -797,8 +803,21 @@ function pdfworkspace_get_documents($activityid, $contextid) {
         $DB->set_field('pdfworkspace_annotations', 'documentid', $firstid,
             ['pdfworkspaceid' => $activityid, 'documentid' => null]);
     }
-    return $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid],
+    return $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid, 'restrictedid' => null],
         'sortorder ASC, id ASC');
+}
+
+/**
+ * Return documents for viewing and discussion, including the separately stored protected PDFs.
+ *
+ * @param int $activityid Workspace instance ID
+ * @param int $contextid Activity context ID
+ * @return stdClass[] Documents in tab order
+ */
+function pdfworkspace_get_view_documents($activityid, $contextid): array {
+    global $DB;
+    pdfworkspace_get_documents($activityid, $contextid); // Repair the ordinary records from legacy backups.
+    return $DB->get_records('pdfworkspace_documents', ['pdfworkspaceid' => $activityid], 'sortorder ASC, id ASC');
 }
 
 /** Block changes that would make an existing annotation point at different PDF pages. */
@@ -839,6 +858,33 @@ function pdfworkspace_resolve_course_documents($data): array {
     return [$catalogue, $catalogue->select($sectionids, $fileids)];
 }
 
+/**
+ * Validate protection of the new files in this user's submitted draft area.
+ *
+ * @param string $selection Submitted batch checkbox value
+ * @param stored_file[] $draftfiles Uploaded files in this request
+ * @param context $context Form or activity context
+ * @return bool Whether the batch contains protected uploads
+ */
+function pdfworkspace_protected_uploads(string $selection, array $draftfiles, context $context): bool {
+    if ($selection === '') {
+        return false;
+    }
+    require_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context);
+    if ($selection !== '1') {
+        throw new moodle_exception('restricteduploadselectionchanged', 'pdfworkspace');
+    }
+    foreach ($draftfiles as $file) {
+        if ($file->is_external_file() || $file->get_filesize() > \mod_pdfworkspace\local\restricted_renderer::MAX_BYTES) {
+            throw new moodle_exception('restrictedinvalidpdf', 'pdfworkspace');
+        }
+    }
+    if ($draftfiles && \mod_pdfworkspace\local\restricted_renderer::executable() === '') {
+        throw new moodle_exception('restrictedrenderersetup', 'pdfworkspace');
+    }
+    return (bool)$draftfiles;
+}
+
 function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles = [], $removalconfirmations = []) {
     global $DB, $USER;
     $fs = get_file_storage();
@@ -847,7 +893,7 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
 
     $context = context_module::instance($cmid);
     $activityid = (int)$data->id;
-    $documents = pdfworkspace_get_documents($activityid, $context->id);
+    $documents = pdfworkspace_get_view_documents($activityid, $context->id);
     $originaldocumentids = array_keys($documents);
     $withdiscussion = [];
     if ($removedocumentids) {
@@ -856,6 +902,9 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
                 throw new moodle_exception('invaliddocument', 'pdfworkspace');
             }
             $document = $documents[$documentid];
+            if (!empty($document->restrictedid)) {
+                require_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context);
+            }
             if ($DB->record_exists('pdfworkspace_annotations', ['documentid' => $documentid])) {
                 \mod_pdfworkspace\local\document_removal::require_confirmation(
                     $context, $documentid, $removalconfirmations[$documentid] ?? '');
@@ -863,12 +912,12 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
             }
         }
     }
+    $draftfiles = $draftitemid ? $fs->get_area_files(context_user::instance($USER->id)->id, 'user', 'draft',
+        $draftitemid, 'sortorder, id', false) : [];
+    $protectuploads = pdfworkspace_protected_uploads((string)($data->protecteduploads ?? ''), $draftfiles, $context);
     if ($draftitemid) {
-        $usercontext = context_user::instance($USER->id);
-        $draftfiles = $fs->get_area_files($usercontext->id, 'user', 'draft', $draftitemid,
-            'sortorder, id', false);
-        if (empty($data->instance)) {
-            // New activity: the draft area contains the complete document set.
+        if (empty($data->instance) && !$protectuploads) {
+            // Keep the standard Moodle filemanager save for ordinary-only creation.
             file_save_draft_area_files($draftitemid, $context->id, 'mod_pdfworkspace', 'content', 0,
                 ['subdirs' => false]);
         } else {
@@ -886,10 +935,8 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
                 }
             }
         }
-    } else {
-        $draftfiles = [];
     }
-    if (!empty($data->instance)) {
+    if (!empty($data->instance) || $protectuploads) {
         if (count($documents) - count($removedocumentids) + count($draftfiles) + count($coursefiles) < 1) {
             throw new moodle_exception('required');
         }
@@ -901,6 +948,10 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
         }
         foreach ($removedocumentids as $documentid) {
             $document = $documents[$documentid];
+            if (!empty($document->restrictedid)) {
+                \mod_pdfworkspace\local\restricted_documents::remove($context, $document->restrictedid);
+                continue;
+            }
             if (isset($withdiscussion[$documentid])) {
                 \mod_pdfworkspace\local\document_removal::delete_discussion($context, $activityid, $documentid);
             }
@@ -911,6 +962,11 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
             }
         }
         foreach ($draftfiles as $draftfile) {
+            if ($protectuploads) {
+                $title = \core_text::substr($draftfile->get_filename(), 0, 160);
+                \mod_pdfworkspace\local\restricted_documents::add($context, $title, $draftfile);
+                continue;
+            }
             $fs->create_file_from_storedfile([
                 'contextid' => $context->id,
                 'component' => 'mod_pdfworkspace',
@@ -919,6 +975,7 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
                 'filepath' => $draftfile->get_filepath(),
                 'filename' => $draftfile->get_filename(),
                 'userid' => $USER->id,
+                'sortorder' => empty($data->instance) ? $draftfile->get_sortorder() : 0,
             ], $draftfile);
         }
     }
@@ -1097,6 +1154,15 @@ function pdfworkspace_prepare_overviewpage($cmid, $myrenderer, $taburl, $action,
     $PAGE->requires->js_call_amd('mod_pdfworkspace/overview', 'init');
 }
 
+/** Resolve the view's route consistently before and after the Moodle header. */
+function pdfworkspace_request_action(): string {
+    $action = optional_param('action', 'view', PARAM_ALPHA);
+    return match ($action) {
+        'overview', 'statistic' => 'overviewquestions',
+        default => $action,
+    };
+}
+
 /** Persistent, permission-aware links within the Overview tab. */
 function pdfworkspace_render_overview_navigation($cmid, $context, $active) {
     $items = [
@@ -1183,7 +1249,7 @@ function pdfworkspace_valid_document_filter($activityid, $contextid, $requested)
 
 /** Plain PDF title for sorting and display. */
 function pdfworkspace_overview_document_title($activityid, $contextid, $documentid) {
-    $documents = pdfworkspace_get_documents($activityid, $contextid);
+    $documents = pdfworkspace_get_view_documents($activityid, $contextid);
     $document = $documents[$documentid] ?? null;
     return $document ? (!empty($document->displayname) ? $document->displayname : $document->filename) : '';
 }

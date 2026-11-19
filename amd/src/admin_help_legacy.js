@@ -39,6 +39,44 @@ export const init = config => {
     const hasTopic = topic => [...choice.options].some(option => option.value === topic);
     let opener = null;
     let activeTopic = '';
+    let openView = 'help';
+    const tabs = [...panel.querySelectorAll('[data-pdfworkspace-panel-tab]')];
+    const combined = tabs.length > 0;
+    const narrow = window.matchMedia('(max-width: 1399.98px)');
+    const page = document.getElementById('page');
+    const backdrop = combined ? document.createElement('div') : null;
+    let ownsInert = false;
+    if (backdrop) {
+        backdrop.className = 'mod-pdfworkspace-panel-backdrop';
+        backdrop.hidden = true;
+        document.body.append(backdrop);
+        backdrop.addEventListener('click', () => hide());
+    }
+    const selectView = view => {
+        if (!combined) return;
+        openView = view;
+        for (const tab of tabs) {
+            const selected = tab.dataset.pdfworkspacePanelTab === view;
+            tab.classList.toggle('active', selected);
+            tab.setAttribute('aria-selected', String(selected));
+            tab.tabIndex = selected ? 0 : -1;
+            panel.querySelector('#' + tab.getAttribute('aria-controls')).hidden = !selected;
+        }
+    };
+    tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectView(tab.dataset.pdfworkspacePanelTab));
+        tab.addEventListener('keydown', event => {
+            const rtl = getComputedStyle(tab.parentElement).direction === 'rtl';
+            const offsets = {ArrowLeft: rtl ? 1 : -1, ArrowRight: rtl ? -1 : 1};
+            const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
+                (index + offsets[event.key] + tabs.length) % tabs.length;
+            if (!Number.isInteger(target)) return;
+            event.preventDefault();
+            const next = tabs[target];
+            selectView(next.dataset.pdfworkspacePanelTab);
+            next.focus();
+        });
+    });
     let ownsSpace = false;
     const exclusiveDrawers = Boolean(DrawerEvents.DRAWER_EXCLUSIVE_REQUESTED && DrawerEvents.DRAWER_EXCLUSIVE_RELEASED);
     document.body.classList.toggle('mod-pdfworkspace-help-legacy-drawers', !exclusiveDrawers);
@@ -54,10 +92,22 @@ export const init = config => {
         const nav = document.querySelector('.navbar.fixed-top');
         const top = nav ? Math.max(0, nav.getBoundingClientRect().bottom) + 12 : 12;
         panel.style.setProperty('--mod-pdfworkspace-help-top', `${top}px`);
+        if (backdrop) {
+            backdrop.style.setProperty('--mod-pdfworkspace-help-top', `${top}px`);
+            backdrop.hidden = panel.hidden || !narrow.matches;
+            if (!backdrop.hidden && page && !page.inert) {
+                page.inert = true;
+                ownsInert = true;
+            } else if (backdrop.hidden && ownsInert) {
+                page.inert = false;
+                ownsInert = false;
+            }
+        }
     };
     const hide = (returnFocus = true, releaseSpace = true) => {
         if (panel.hidden) return;
         panel.hidden = true;
+        position();
         document.body.classList.remove('mod-pdfworkspace-help-open');
         document.querySelectorAll('[data-pdfworkspace-help-open]').forEach(button => button.setAttribute('aria-expanded', 'false'));
         if (ownsSpace) {
@@ -75,10 +125,11 @@ export const init = config => {
         if (activeTopic !== topic) content.scrollTop = 0;
         activeTopic = topic;
     };
-    const show = (topic, trigger) => {
+    const show = (topic, trigger, view = 'help') => {
         if (topic && !hasTopic(topic)) return;
         if (trigger) opener = trigger;
         closeMobileDrawers();
+        selectView(view);
         showTopic(topic || activeTopic || choice.value);
         position();
         if (panel.hidden) {
@@ -90,7 +141,10 @@ export const init = config => {
             document.body.classList.add('mod-pdfworkspace-help-open');
         }
         document.querySelectorAll('[data-pdfworkspace-help-open]').forEach(button => button.setAttribute('aria-expanded', 'true'));
-        (panel.querySelector('article:not([hidden]) h3') || heading).focus();
+        position();
+        const target = openView === 'analysis' ? tabs.find(tab => tab.dataset.pdfworkspacePanelTab === openView) :
+            panel.querySelector('article:not([hidden]) h3');
+        (target || heading).focus();
     };
     document.addEventListener('click', event => {
         // Native information controls inside labels/disclosures must not change their host control.
@@ -111,7 +165,8 @@ export const init = config => {
         }
         if (!button && !topic) return;
         event.preventDefault();
-        if (button && !panel.hidden) { hide(); return; }
+        const view = button?.dataset.pdfworkspaceHelpView || 'help';
+        if (button && !panel.hidden && view === openView) { hide(); return; }
         const popover = link?.closest('.popover');
         // Moodle adapters may describe the outer popover or its body; match the actual trigger.
         const describedIds = [popover?.id, popover?.querySelector('.popover-body')?.id].filter(Boolean);
@@ -122,7 +177,7 @@ export const init = config => {
         if (topic) {
             jQuery('.mod-pdfworkspace-context-help-icon').popover('hide');
         }
-        show(topic, trigger);
+        show(topic, trigger, view);
     });
     choice.addEventListener('change', () => showTopic(choice.value));
     document.addEventListener('keydown', event => {

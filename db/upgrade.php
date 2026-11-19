@@ -815,5 +815,103 @@ function xmldb_pdfworkspace_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026102400, 'pdfworkspace');
     }
 
+    if ($oldversion < 2026111902) {
+        $activity = new xmldb_table('pdfworkspace');
+        $field = new xmldb_field('aiquestions', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'staffdefaultaudience');
+        if (!$dbman->field_exists($activity, $field)) {
+            $dbman->add_field($activity, $field);
+        }
+
+        $table = new xmldb_table('pdfworkspace_ai_courses');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('courseid', XMLDB_KEY_FOREIGN_UNIQUE, ['courseid'], 'course', ['id']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        upgrade_mod_savepoint(true, 2026111902, 'pdfworkspace');
+    }
+
+    if ($oldversion < 2026111906) {
+        $table = new xmldb_table('pdfworkspace_restricted');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('pdfworkspaceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('title', XMLDB_TYPE_CHAR, '160', null, XMLDB_NOTNULL);
+        $table->add_field('pagecount', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('pdfworkspaceid', XMLDB_KEY_FOREIGN, ['pdfworkspaceid'], 'pdfworkspace', ['id']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        upgrade_mod_savepoint(true, 2026111906, 'pdfworkspace');
+    }
+
+    if ($oldversion < 2026111907) {
+        $table = new xmldb_table('pdfworkspace_rstr_marks');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('documentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('page', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('tool', XMLDB_TYPE_CHAR, '8', null, XMLDB_NOTNULL);
+        $table->add_field('label', XMLDB_TYPE_CHAR, '160');
+        $table->add_field('points', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL);
+        $table->add_field('audience', XMLDB_TYPE_CHAR, '12', null, XMLDB_NOTNULL);
+        $table->add_field('recipientid', XMLDB_TYPE_INTEGER, '10');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('documentid', XMLDB_KEY_FOREIGN, ['documentid'], 'pdfworkspace_restricted', ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_key('recipientid', XMLDB_KEY_FOREIGN, ['recipientid'], 'user', ['id']);
+        $table->add_index('documentpage', XMLDB_INDEX_NOTUNIQUE, ['documentid', 'page']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        $table = new xmldb_table('pdfworkspace_rstr_comments');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('markid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('content', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('markid', XMLDB_KEY_FOREIGN, ['markid'], 'pdfworkspace_rstr_marks', ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        upgrade_mod_savepoint(true, 2026111907, 'pdfworkspace');
+    }
+
+    if ($oldversion < 2026111908) {
+        $table = new xmldb_table('pdfworkspace_documents');
+        $field = new xmldb_field('restrictedid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'id');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        // Give previously uploaded documents ordinary viewer IDs. Keep both private file areas.
+        $transaction = $DB->start_delegated_transaction();
+        $storage = get_file_storage();
+        $documents = $DB->get_records('pdfworkspace_restricted', [], 'id ASC');
+        foreach ($documents as $document) {
+            if ($DB->record_exists('pdfworkspace_documents', ['restrictedid' => $document->id])) {
+                continue;
+            }
+            $cm = get_coursemodule_from_instance('pdfworkspace', $document->pdfworkspaceid, 0, false, MUST_EXIST);
+            $context = context_module::instance($cm->id);
+            $originals = $storage->get_area_files($context->id, 'mod_pdfworkspace', 'restrictedoriginal',
+                $document->id, 'id', false);
+            if (count($originals) !== 1) {
+                throw new moodle_exception('filenotfound', 'pdfworkspace');
+            }
+            \mod_pdfworkspace\local\restricted_documents::register_in_viewer(
+                $document->pdfworkspaceid, $document->id, $document->title, reset($originals));
+        }
+        // Retire the pilot's test markings and discussions by explicit owner decision.
+        $DB->delete_records('pdfworkspace_rstr_comments');
+        $DB->delete_records('pdfworkspace_rstr_marks');
+        $transaction->allow_commit();
+        upgrade_mod_savepoint(true, 2026111908, 'pdfworkspace');
+    }
+
     return true;
 }

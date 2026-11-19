@@ -95,6 +95,19 @@ audiences participants and staff may select. Replies keep the thread's audience.
 
 Teachers with course editing permission can change the displayed document names.
 
+### Restrict access to PDF originals
+
+In the activity settings, add the files in the usual PDF upload field and select
+**Protect All Newly Uploaded PDFs** before saving. The checkbox applies to all
+new files in the current upload. Save regular and protected uploads separately.
+
+Protected documents appear with a lock in the usual document tabs. Users can
+annotate rendered pages and discuss those annotations in the same viewer.
+Access to the original PDF requires a separate permission, independent of the
+activity's regular download options. See the
+[protected PDF setup](export/README.md#protected-pdf-setup) for permissions,
+server configuration and backup guidance.
+
 ### Import PDFs from the course
 
 In the activity settings, tick several PDFs under **Individual PDFs from This
@@ -140,7 +153,18 @@ enabled in the activity. Teachers with the corresponding permission can download
 without that participant option; an explicit permission prohibition still applies.
 Commented exports contain only markings and comments visible to the requesting user.
 
-## Server requirements for combined downloads
+## Optional server components
+
+### Poppler for protected PDFs
+
+To add protected PDFs, install Poppler's `pdftoppm` on the Moodle server. Enter
+its absolute path in **Site administration → Plugins → Activity modules →
+PDF Workspace → PDF Renderer for Restricted Documents**. Moodle uses it to render
+page images when a protected PDF is saved. See the setup steps in
+[English](export/README.md#protected-pdf-setup) or
+[German](export/README.de.md#geschützte-pdfs-einrichten).
+
+### Server requirements for combined downloads
 
 Combined PDF and workspace downloads additionally require **Python 3.11+ on the
 Moodle server**, with **pypdf, ReportLab and cryptography for AES-encrypted PDFs**.

@@ -1,0 +1,24 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+    @template mod_pdfworkspace/question_analysis
+    @copyright 2026 Andreas Giesen <andreas@108design.com>
+    @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Fixed actions for the questions overview, with a read-only result beneath.
+    Example context (json):
+    {"cmid": 12, "document": 0, "page": 0}
+}}
+<div data-pdfworkspace-analysis data-cmid="{{cmid}}" data-document="{{document}}" data-page="{{page}}"
+    data-failed="{{#str}} aiquestions_failed, mod_pdfworkspace {{/str}}">
+    <p>{{#str}} aiquestions_panel_intro, mod_pdfworkspace {{/str}}</p>
+    <div class="mod-pdfworkspace-analysis-actions mb-3">
+        <button type="button" class="btn btn-secondary text-start" data-preset="topics">
+            {{#str}} aiquestions_topics, mod_pdfworkspace {{/str}}
+        </button>
+        <button type="button" class="btn btn-secondary text-start" data-preset="unanswered">
+            {{#str}} aiquestions_unanswered, mod_pdfworkspace {{/str}}
+        </button>
+    </div>
+    <p data-analysis-status role="status" aria-live="polite"></p>
+    <div data-analysis-result></div>
+</div>

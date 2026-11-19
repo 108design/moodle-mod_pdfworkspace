@@ -72,6 +72,40 @@
 }
 
 /* PDF Workspace activity form: one clear action row per stored document. */
+.pdfworkspace-protected-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    max-width: 100%;
+}
+.pdfworkspace-protected-upload .form-check-input {
+    flex: 0 0 auto;
+    position: static;
+    float: none;
+    margin: 0;
+}
+.pdfworkspace-protected-upload label {
+    margin: 0;
+}
+.pdfworkspace-protected-upload .form-check-input:disabled + label {
+    opacity: .65;
+}
+.pdfworkspace-protected-upload label,
+.pdfworkspace-protected-name {
+    overflow-wrap: anywhere;
+}
+.pdfworkspace-protected-name .pdfworkspace-protected-badge {
+    color: #222b3a;
+    background-color: #e7ecf3;
+    border: 1px solid transparent;
+}
+@media (forced-colors: active) {
+    .pdfworkspace-protected-name .pdfworkspace-protected-badge {
+        color: CanvasText;
+        background-color: Canvas;
+        border-color: CanvasText;
+    }
+}
 #id_existingdocuments [data-name="documentcolumns"] { width: 100%; }
 #id_existingdocuments [data-groupname^="documentrow_"] .pdfworkspace-document-row { flex: 0 0 auto; }
 #id_existingdocuments .pdfworkspace-document-columns,

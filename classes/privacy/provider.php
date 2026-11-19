@@ -66,6 +66,21 @@ class provider implements
                 'core_files', [], 'privacy:metadata:core_files'
         );
 
+        $collection->add_subsystem_link('core_ai', [], 'privacy:metadata:core_ai');
+
+        $collection->add_database_table('pdfworkspace_rstr_marks', [
+            'userid' => 'privacy:metadata:pdfworkspace_annotations:userid',
+            'recipientid' => 'privacy:metadata:pdfworkspace_annotations:recipientid',
+            'documentid' => 'privacy:metadata:pdfworkspace_annotations:documentid',
+            'points' => 'privacy:metadata:restrictedmarkpoints',
+            'label' => 'privacy:metadata:restrictedmarktext',
+        ], 'privacy:metadata:restrictedmarkings');
+        $collection->add_database_table('pdfworkspace_rstr_comments', [
+            'markid' => 'privacy:metadata:pdfworkspace_comments:annotationid',
+            'userid' => 'privacy:metadata:pdfworkspace_comments:userid',
+            'content' => 'privacy:metadata:pdfworkspace_comments:content',
+        ], 'privacy:metadata:restrictedmarkcomments');
+
         // 2. Describing data stored in database tables.
         // 2.1 A user's annotations in the pdf are stored.
         $collection->add_database_table(
@@ -156,6 +171,16 @@ class provider implements
                 ";
 
         $contextlist->add_from_sql($sql, $params);
+        $contextlist->add_from_sql("SELECT DISTINCT ctx.id
+              FROM {context} ctx
+              JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel
+              JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+              JOIN {pdfworkspace_restricted} d ON d.pdfworkspaceid = cm.instance
+              JOIN {pdfworkspace_rstr_marks} a ON a.documentid = d.id
+         LEFT JOIN {pdfworkspace_rstr_comments} c ON c.markid = a.id
+             WHERE a.userid = :author OR a.recipientid = :recipient OR c.userid = :commenter",
+            ['contextlevel' => CONTEXT_MODULE, 'modname' => 'pdfworkspace', 'author' => $userid,
+                'recipient' => $userid, 'commenter' => $userid]);
 
         return $contextlist;
     }
@@ -269,6 +294,21 @@ class provider implements
             $pdfworkspace->mydrawingsandtextboxes = $mydrawingsandtextboxes;
             $pdfworkspace->mytargetedannotations = $mytargetedannotations;
 
+            $scope = ['activity' => $pdfworkspace->id, 'userid' => $userid];
+            $pdfworkspace->myrestrictedmarkings = $DB->get_records_sql("SELECT a.id, a.documentid, a.page, a.tool,
+                    a.points, a.label, a.audience, a.recipientid, a.timecreated
+                FROM {pdfworkspace_rstr_marks} a JOIN {pdfworkspace_restricted} d ON d.id = a.documentid
+                WHERE d.pdfworkspaceid = :activity AND a.userid = :userid", $scope);
+            $pdfworkspace->myrestrictedcomments = $DB->get_records_sql("SELECT c.id, c.markid, a.documentid, a.page,
+                    c.content, c.timecreated
+                FROM {pdfworkspace_rstr_comments} c JOIN {pdfworkspace_rstr_marks} a ON a.id = c.markid
+                JOIN {pdfworkspace_restricted} d ON d.id = a.documentid
+                WHERE d.pdfworkspaceid = :activity AND c.userid = :userid", $scope);
+            $pdfworkspace->mytargetedrestrictedmarkings = $DB->get_records_sql("SELECT a.id, a.userid, a.documentid, a.page,
+                    a.timecreated
+                FROM {pdfworkspace_rstr_marks} a JOIN {pdfworkspace_restricted} d ON d.id = a.documentid
+                WHERE d.pdfworkspaceid = :activity AND a.recipientid = :userid", $scope);
+
             writer::with_context($context)->export_data([], $pdfworkspace);
         }
         $pdfworkspaces->close();
@@ -291,6 +331,9 @@ class provider implements
         $cm = get_coursemodule_from_id('pdfworkspace', $instanceid);
         if (!$cm) {
             return;
+        }
+        foreach (\mod_pdfworkspace\local\restricted_documents::listing((int)$cm->instance) as $document) {
+            \mod_pdfworkspace\local\restricted_markings::delete_document($document->id);
         }
 
         // 1. Delete all reports of comments in this annotator.
@@ -345,6 +388,7 @@ class provider implements
         foreach ($contextlist->get_contexts() as $context) {
 
             $instanceid = $DB->get_field('course_modules', 'instance', ['id' => $context->instanceid], MUST_EXIST);
+            self::delete_restricted_user_data((int)$instanceid, [$userid]);
             $DB->set_field('pdfworkspace_annotations', 'audience', 'private',
                 ['pdfworkspaceid' => $instanceid, 'recipientid' => $userid]);
             $DB->set_field('pdfworkspace_annotations', 'recipientid', null,
@@ -494,6 +538,16 @@ class provider implements
             'modulename'    => 'pdfworkspace',
         ];
 
+        foreach (['a.userid', 'a.recipientid', 'c.userid'] as $field) {
+            $userlist->add_from_sql('userid', "SELECT DISTINCT $field AS userid
+                  FROM {course_modules} cm
+                  JOIN {modules} m ON m.id = cm.module AND m.name = :modulename
+                  JOIN {pdfworkspace_restricted} d ON d.pdfworkspaceid = cm.instance
+                  JOIN {pdfworkspace_rstr_marks} a ON a.documentid = d.id
+             LEFT JOIN {pdfworkspace_rstr_comments} c ON c.markid = a.id
+                 WHERE cm.id = :contextid AND $field IS NOT NULL", $params);
+        }
+
         // Comments.
         $sql = "SELECT ac.userid
                 FROM {course_modules} cm
@@ -552,6 +606,28 @@ class provider implements
     }
 
     /**
+     * Erase the approved users' restricted drawings and comments in one workspace.
+     *
+     * @param int $activityid Workspace instance ID
+     * @param int[] $userids Approved user IDs
+     */
+    private static function delete_restricted_user_data(int $activityid, array $userids): void {
+        global $DB;
+        [$ids, $userparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'restricteduser');
+        $params = ['activityid' => $activityid] + $userparams;
+        $scope = 'documentid IN (SELECT id FROM {pdfworkspace_restricted} WHERE pdfworkspaceid = :activityid)';
+        $transaction = $DB->start_delegated_transaction();
+        $DB->delete_records_select('pdfworkspace_rstr_comments',
+            "userid $ids AND markid IN (SELECT id FROM {pdfworkspace_rstr_marks} WHERE $scope)", $params);
+        $DB->delete_records_select('pdfworkspace_rstr_comments',
+            "markid IN (SELECT id FROM {pdfworkspace_rstr_marks} WHERE $scope AND userid $ids)", $params);
+        $DB->delete_records_select('pdfworkspace_rstr_marks', "$scope AND userid $ids", $params);
+        $DB->execute("UPDATE {pdfworkspace_rstr_marks} SET audience = 'private', recipientid = NULL
+            WHERE $scope AND recipientid $ids", $params);
+        $transaction->allow_commit();
+    }
+
+    /**
      * Deletes data for users in given userlist's context.
      * @param approved_userlist $userlist
      */
@@ -573,6 +649,7 @@ class provider implements
         // Find the instance.
         $annotationinstance = get_coursemodule_from_id('pdfworkspace', $context->instanceid);
         $annotatorid = $annotationinstance->instance;
+        self::delete_restricted_user_data((int)$annotatorid, $userlist->get_userids());
 
         // Combine instance + user sql.
         $params = array_merge(['pdfworkspaceid' => $annotatorid], $userinparams);

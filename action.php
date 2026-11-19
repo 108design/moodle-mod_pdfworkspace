@@ -57,7 +57,7 @@ if (in_array($action, ['create', 'addComment', 'editComment', 'voteComment', 'su
     register_shutdown_function([$lock, 'release']);
 }
 
-$documents = pdfworkspace_get_documents($pdfworkspace->id, $context->id);
+$documents = pdfworkspace_get_view_documents($pdfworkspace->id, $context->id);
 $pdfdocid = optional_param('doc', 0, PARAM_INT);
 if (!$pdfdocid && count($documents) === 1) {
     $pdfdocid = (int)reset($documents)->id;
@@ -747,6 +747,9 @@ if ($action === 'markReportAsUnseen') {
 /****************************************************************************************************************/
 
 if ($action === 'getCommentsToPrint') {
+    if (!empty($documents[$pdfdocid]->restrictedid)) {
+        throw new moodle_exception('invalidaccessparameter');
+    }
 
     // Check capability and setting.
     if (!$pdfworkspace->useprintcomments && !has_capability('mod/pdfworkspace:printcomments', $context)) {

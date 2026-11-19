@@ -1,14 +1,63 @@
-# Combined PDF download
+# PDF Workspace server setup
 
 PDF Workspace integration documentation. Copyright 2026 Andreas Giesen
 <andreas@108design.com>. GPL v3 or later.
+
+## Protected PDF setup
+
+1. The server administrator installs Poppler's `pdftoppm` on the Moodle server.
+   On [Debian](https://packages.debian.org/stable/poppler-utils) and
+   [Ubuntu](https://packages.ubuntu.com/noble/poppler-utils), it is part of
+   `poppler-utils`. Check the installed path and version.
+
+   ```sh
+   sudo apt install poppler-utils
+   command -v pdftoppm
+   pdftoppm -v
+   ```
+
+2. The Moodle site administrator enters the absolute path, usually
+   `/usr/bin/pdftoppm`, under **Site administration → Plugins → Activity modules →
+   PDF Workspace → PDF Renderer for Restricted Documents**
+   (`mod_pdfworkspace/restrictedpdftoppm`).
+3. Check that the PHP web process can access and run the executable with
+   `proc_open`. On Linux with PHP `open_basedir`, check the effective site
+   settings for access to the executable, Moodle's temporary directory and
+   `/dev/null` for the renderer's standard streams. Upload and save a small
+   protected PDF in a test activity and open its pages in the browser.
+
+To add a protected PDF, use the normal PDF upload field in the activity settings,
+tick **Protect All Newly Uploaded PDFs** and save. The checkbox applies to every
+new file in that upload. Save regular and protected files in separate uploads.
+Each protected file can have up to 150 pages and be up to 25 MiB.
+
+Moodle renders the pages as JPEG images when the file is saved. Once generated,
+the images can be viewed without running Poppler again. The lock in the document
+tab identifies a protected PDF. Drawing tools and annotation discussions work in
+the viewer. Text selection and PDF text search are unavailable on the page images.
+Users can still take screenshots of what they can view.
+
+The two permissions are reserved for site administrators by default. Assign them
+independently if another role needs access.
+
+- `mod/pdfworkspace:managerestricteddocuments` allows adding and removing protected PDFs.
+- `mod/pdfworkspace:downloadrestricteddocuments` allows downloading their originals,
+  independently of the activity's ordinary download setting.
+
+Regular exports, course imports and portable Moodle backups omit protected
+documents and their annotations. Include both the Moodle database and its
+file storage in server backups.
+
+## Combined PDF downloads
 
 Combined downloads create a new PDF on the Moodle server. They preserve the
 original pages and add the requesting user's visible markings and comments.
 The stored source PDFs are not changed.
 
-Workspace downloads combine the documents selected in the activity settings,
-in their configured download order, and add bookmarks using the document names.
+Use the single-document export to save a regular PDF with visible annotations.
+Workspace downloads merge selected regular PDFs, with or without annotations,
+in the download order configured in the activity settings. Document names become
+bookmarks.
 
 ## Server prerequisites
 
@@ -27,15 +76,18 @@ Use `--copies` so the interpreter stays inside the Venv. With PHP `open_basedir`
 a symlink to `/usr/bin/python` can fail the plugin's file/access checks. The Venv
 path must be within PHP's allowed directories; do not loosen that restriction globally.
 
-Example commands for a server administrator; adapt both absolute paths to your site:
+Run the following as the server account that maintains the environment. Verify that
+`python3` is version 3.11 or newer. Adapt both absolute paths to your installation.
+With Moodle's split web directory, the plugin path includes `public/mod/pdfworkspace`.
 
 ```sh
+python3 --version
 python3 -m venv --copies /srv/pdfworkspace-export/venv
 /srv/pdfworkspace-export/venv/bin/python -m pip install -r /absolute/path/to/moodle/mod/pdfworkspace/export/requirements.txt
 /srv/pdfworkspace-export/venv/bin/python -m pip check
 ```
 
-Run these as the account that maintains the environment. The Moodle PHP service
+The Moodle PHP service
 account needs directory traversal, read access to the libraries and helper, and
 execute access to the interpreter. It also needs write access to Moodle's temporary
 directory. PHP must permit `proc_open` and access to the interpreter path, including
@@ -51,8 +103,8 @@ as the Moodle service account:
 php admin/cli/cfg.php --component=mod_pdfworkspace --name=exportpython --set=/srv/pdfworkspace-export/venv/bin/python
 ```
 
-The third button is offered when the configured executable and PHP process support
-are available and the existing download permission allows it. Verify library imports
+The combined download options appear when PHP can launch the configured
+interpreter and the user's download permissions allow them. Verify library imports
 as the **same service account** before trying a download:
 
 ```sh

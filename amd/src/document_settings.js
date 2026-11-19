@@ -62,6 +62,67 @@ const confirmRemoval = async(checkbox, token, settings) => {
     }, null, {triggerElement: checkbox});
 };
 
+/**
+ * Enable the batch checkbox when the existing upload field contains new files.
+ */
+export function initProtectedUploads() {
+    const row = document.querySelector('[data-pdfworkspace-protected-uploads]');
+    const checkbox = row?.querySelector('input[type="checkbox"]');
+    const field = document.getElementById('fitem_id_files');
+    const selection = row?.closest('form')?.elements.namedItem('protecteduploads');
+    const picker = field?.querySelector('.filemanager');
+    if (!checkbox || !selection || !picker) {
+        return;
+    }
+    checkbox.checked = selection.value === '1';
+    if (row.dataset.pdfworkspaceProtectedUploads !== '1') {
+        return;
+    }
+    checkbox.addEventListener('change', () => {
+        selection.value = checkbox.checked ? '1' : '';
+    });
+    const update = () => {
+        checkbox.disabled = picker.classList.contains('fm-updating')
+            || !picker.querySelector('.fp-content .fp-file .fp-filename');
+    };
+    const observer = new MutationObserver(update);
+    observer.observe(picker, {childList: true, subtree: true, attributes: true, attributeFilter: ['class']});
+    update();
+}
+
+/**
+ * Apply the usual confirmation and remove state for a saved PDF.
+ *
+ * @param {HTMLElement} row
+ * @param {HTMLInputElement} remove
+ * @param {?HTMLInputElement} include
+ * @param {object} settings
+ */
+function initRemoval(row, remove, include, settings) {
+    const token = remove.dataset.documentRemovalId
+        ? remove.form.elements.namedItem('confirmremovedocument_' + remove.dataset.documentRemovalId) : null;
+    const update = () => {
+        row.classList.toggle('pdfworkspace-document-removing', remove.checked);
+        if (include) {
+            include.disabled = remove.checked;
+        }
+    };
+    remove.addEventListener('change', () => {
+        if (token && !remove.checked) {
+            token.value = '';
+        }
+        if (token && remove.checked && !token.value) {
+            remove.checked = false;
+            confirmRemoval(remove, token, settings).catch(exception);
+        }
+        update();
+    });
+    if (token && !token.value) {
+        remove.checked = false;
+    }
+    update();
+}
+
 let initialised = false;
 export function init(settings) {
     if (initialised) return;
@@ -158,26 +219,20 @@ export function init(settings) {
             // Keep Moodle's feedback and hidden values outside the four visible columns.
             const checkboxCell = field => field.closest('label, .form-check') || field;
             grid.append(checkboxCell(remove), filename, checkboxCell(include), controls);
-            const token = remove.dataset.documentRemovalId
-                ? remove.form.elements.namedItem('confirmremovedocument_' + remove.dataset.documentRemovalId) : null;
-            function removalState() {
-                row.classList.toggle('pdfworkspace-document-removing', remove.checked);
-                include.disabled = remove.checked;
+            initRemoval(row, remove, include, settings);
+        }
+        for (const name of region.querySelectorAll('.pdfworkspace-protected-name')) {
+            const row = name.closest('[data-groupname^="documentrow_"]');
+            const remove = row?.querySelector('input[type="checkbox"][name^="removedocument_"]');
+            const group = name.parentElement;
+            if (!remove || !group) {
+                continue;
             }
-            remove.addEventListener('change', () => {
-                if (token && !remove.checked) {
-                    token.value = '';
-                }
-                if (token && remove.checked && !token.value) {
-                    remove.checked = false;
-                    confirmRemoval(remove, token, settings).catch(exception);
-                }
-                removalState();
-            });
-            if (token && !token.value) {
-                remove.checked = false;
-            }
-            removalState();
+            const grid = document.createElement('div');
+            grid.className = 'pdfworkspace-document-row';
+            group.prepend(grid);
+            grid.append(remove.closest('label, .form-check') || remove, name);
+            initRemoval(row, remove, null, settings);
         }
         if (rows().length) { update(false); }
 }

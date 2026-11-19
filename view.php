@@ -63,9 +63,9 @@ $PAGE->set_title(format_string($rawname));
 pdfworkspace_view($pdfworkspace, $course, $cm, $context);
 
 $fs = get_file_storage();
-$documents = pdfworkspace_get_documents($pdfworkspace->id, $context->id);
+$documents = pdfworkspace_get_view_documents($pdfworkspace->id, $context->id);
 $files = $fs->get_area_files($context->id, 'mod_pdfworkspace', 'content', 0, 'sortorder DESC, id ASC', false);
-if (!$documents || !$files) {
+if (!$documents) {
     pdfworkspace_print_filenotfound($pdfworkspace, $cm, $course);
     die;
 }
@@ -84,7 +84,7 @@ $pdfworkspace->documents = $documents;
 $pdfworkspace->currentdocumentid = $selectedid;
 $selecteddocument = $documents[$selectedid];
 $file = null;
-foreach ($files as $candidate) {
+foreach (empty($selecteddocument->restrictedid) ? $files : [] as $candidate) {
     if ($candidate->get_filepath() === $selecteddocument->filepath &&
             $candidate->get_filename() === $selecteddocument->filename &&
             $candidate->get_contenthash() === $selecteddocument->contenthash) {
@@ -92,20 +92,20 @@ foreach ($files as $candidate) {
         break;
     }
 }
-if ($file === null) {
+if ($file === null && empty($selecteddocument->restrictedid)) {
     pdfworkspace_print_filenotfound($pdfworkspace, $cm, $course);
     die;
 }
 $PAGE->set_url('/mod/pdfworkspace/view.php', ['id' => $cm->id, 'doc' => $selectedid]);
 
-$pdfworkspace->mainfile = $file->get_filename();
+$pdfworkspace->mainfile = $selecteddocument->filename;
 
 // Set course name for display.
 $PAGE->set_heading($course->fullname);
 
 // Display course name, navigation bar at the very top and "Dashboard->...->..." bar.
 $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/viewer.css', ['v' => '2026092809.2']));
-$PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/ui.css', ['v' => '2026100602']));
+$PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/ui.css', ['v' => '2026111909']));
 $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 echo $OUTPUT->header();
 

@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$action = optional_param('action', 'view', PARAM_ALPHA); // The default action is 'view'.
+$action = pdfworkspace_request_action();
 
 $taburl = new moodle_url('/mod/pdfworkspace/view.php', array('id' => $id));
 
@@ -33,11 +33,6 @@ $myrenderer = $PAGE->get_renderer('mod_pdfworkspace');
 require_course_login($pdfworkspace->course, true, $cm);
 
 /* * ********************************************** Display overview page *********************************************** */
-
-if ($action === 'overview' || $action === 'statistic') {
-    // Go to question-overview by default.
-    $action = 'overviewquestions';
-}
 
 if ($action === 'forwardquestion') {
     require_sesskey();
@@ -171,6 +166,7 @@ if ($action === 'overviewquestions') {
     pdfworkspace_prepare_overviewpage($id, $myrenderer, $taburl, ['tab' => 'overview', 'action' => $action], $pdfworkspace,
         $context);
     echo html_writer::div($OUTPUT->heading(get_string('questionstab', 'pdfworkspace'), 2, 'mb-0'), 'pt-4 pb-3');
+    echo \mod_pdfworkspace\local\admin_help::analysis_controls($context);
     if ($staff) {
         $questions = pdfworkspace_load_overview_questions($thisannotator, $context, 2);
         echo $OUTPUT->render_from_template('mod_pdfworkspace/question_dashboard',
