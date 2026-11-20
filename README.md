@@ -73,6 +73,7 @@ Click a preview to open the full-size screenshot.
 - Configurable visibility for participant and staff annotations.
 - An overview of questions, answers, your own posts and reports.
 - Downloads of original PDFs, comments, annotated PDFs and selected workspace documents.
+- Admin protected PDFs can not be downloaded even from the page source (see notes below)
 
 Supports Moodle 4.5, 5.0, 5.1, 5.2 and 5.3.
 
@@ -203,8 +204,3 @@ GNU General Public License version 3 or later. See [LICENSE.md](https://github.c
 Bundled third-party code retains its original licences: MIT for pdf-annotate.js,
 text-clipper and jsPDF; Apache 2.0 for PDF.js and its supporting assets.
 See [thirdpartylibs.xml](thirdpartylibs.xml) and the bundled licence files for details.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
