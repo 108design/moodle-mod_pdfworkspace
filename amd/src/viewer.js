@@ -1,3 +1,4 @@
+// This file is part of Moodle - https://moodle.org/
 /*
  * PDF Workspace viewer additions.
  * Original: 2016 Instructure, Inc. (MIT); 2018 RWTH Aachen (PDF Annotator).

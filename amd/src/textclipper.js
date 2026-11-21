@@ -1,3 +1,4 @@
+// This file is part of Moodle - https://moodle.org/
 /**
  * This file is for shortening text.
  * 
