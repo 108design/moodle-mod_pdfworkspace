@@ -59,13 +59,28 @@ $rawname = $pdfworkspace->name;
 $pdfworkspace->name = format_text($pdfworkspace->name, FORMAT_MOODLE, ['para' => false, 'filter' => true]);
 $PAGE->set_title(format_string($rawname));
 
-// Completion and trigger events.
-pdfworkspace_view($pdfworkspace, $course, $cm, $context);
-
 $fs = get_file_storage();
+$pending = \mod_pdfworkspace\local\restricted_documents::pending($pdfworkspace->id);
 $documents = pdfworkspace_get_view_documents($pdfworkspace->id, $context->id);
+$processing = array_filter($pending, static fn($document) => !$document->rendererror);
+$canmanage = has_all_capabilities(['mod/pdfworkspace:managerestricteddocuments', 'moodle/course:manageactivities'], $context);
+$notices = '';
+if ($processing && ($canmanage || !$documents)) {
+    $notices .= $OUTPUT->notification(get_string('restrictedprocessing', 'pdfworkspace'), 'info', false);
+}
+if ($canmanage && count($pending) > count($processing)) {
+    $settings = new moodle_url('/course/modedit.php', ['update' => $cm->id]);
+    $link = html_writer::link($settings, get_string('restrictedchecksettings', 'pdfworkspace'));
+    $notices .= $OUTPUT->notification(get_string('restrictedprocessingfailed', 'pdfworkspace', $link), 'warning', false);
+}
 $files = $fs->get_area_files($context->id, 'mod_pdfworkspace', 'content', 0, 'sortorder DESC, id ASC', false);
 if (!$documents) {
+    if ($notices !== '') {
+        $PAGE->set_url('/mod/pdfworkspace/view.php', ['id' => $cm->id]);
+        $PAGE->set_heading($course->fullname);
+        echo $OUTPUT->header(), $notices, $OUTPUT->footer();
+        exit;
+    }
     pdfworkspace_print_filenotfound($pdfworkspace, $cm, $course);
     die;
 }
@@ -96,6 +111,8 @@ if ($file === null && empty($selecteddocument->restrictedid)) {
     pdfworkspace_print_filenotfound($pdfworkspace, $cm, $course);
     die;
 }
+// Viewing a pending upload does not count as opening a document.
+pdfworkspace_view($pdfworkspace, $course, $cm, $context);
 $PAGE->set_url('/mod/pdfworkspace/view.php', ['id' => $cm->id, 'doc' => $selectedid]);
 
 $pdfworkspace->mainfile = $selecteddocument->filename;
@@ -108,6 +125,7 @@ $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/viewer.css', ['v' 
 $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/ui.css', ['v' => '2026111909']));
 $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 echo $OUTPUT->header();
+echo $notices;
 
 // Render the activity information.
 if ($CFG->version < 2022041900) {

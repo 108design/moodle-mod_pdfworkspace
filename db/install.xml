@@ -2,7 +2,7 @@
 <!-- Original: Copyright 2018 RWTH Aachen (PDF Annotator).
      Modifications: Copyright 2026 Andreas Giesen <andreas@108design.com>.
      SPDX-License-Identifier: GPL-3.0-or-later. -->
-<XMLDB PATH="mod/pdfworkspace/db" VERSION="20261119" COMMENT="XMLDB file for Moodle mod/pdfworkspace"
+<XMLDB PATH="mod/pdfworkspace/db" VERSION="20261125" COMMENT="XMLDB file for Moodle mod/pdfworkspace"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -120,6 +120,7 @@
         <FIELD NAME="pdfworkspaceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="title" TYPE="char" LENGTH="160" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="pagecount" TYPE="int" LENGTH="4" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="rendererror" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

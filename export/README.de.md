@@ -20,20 +20,22 @@ GPL v3 oder neuer.
    `/usr/bin/pdftoppm`, unter **Website-Administration → Plugins → Aktivitäten →
    PDF Workspace → PDF-Renderer für geschützte Dokumente**
    (`mod_pdfworkspace/restrictedpdftoppm`) ein.
-3. Prüfe, ob der PHP-Webprozess das Programm mit `proc_open` starten kann. Wenn
+3. Prüfe, ob Moodles Cron das Programm mit `proc_open` starten kann. Wenn
    auf dem Linux-Server `open_basedir` aktiv ist, prüfe in den PHP-Einstellungen
-   der Website den Zugriff auf das Programm, Moodles temporäres Verzeichnis und
+   den Zugriff auf das Programm, Moodles temporäres Verzeichnis und
    `/dev/null` für die Standardstreams des Renderers. Lade in einer Testaktivität
-   ein kleines geschütztes PDF hoch und öffne nach dem Speichern die Seiten im Browser.
+   ein kleines geschütztes PDF hoch und öffne nach Abschluss der Hintergrundaufgabe die Seiten im Browser.
 
 Verwende in den Aktivitätseinstellungen das normale PDF-Uploadfeld. Setze den
 Haken bei **Alle neu hochgeladenen PDFs schützen** und speichere. Das Kästchen
 gilt für alle neuen Dateien dieses Uploads. Lade reguläre und geschützte PDFs
 in getrennten Schritten hoch und speichere jeweils. Pro geschützter Datei gelten
-150 Seiten und 25 MiB als Obergrenzen.
+500 Seiten, 64 MiB für das Original und 256 MiB für die Seitenbilder als
+Obergrenzen. Die Uploadgrenzen von Moodle und PHP gelten zusätzlich.
 
-Moodle erzeugt die JPEG-Seitenbilder beim Speichern. Beim Öffnen fertiger
-Seitenbilder wird Poppler nicht erneut gestartet. Ein Schloss im Dokumenttab
+Moodles Cron verarbeitet pro Website jeweils eine geschützte PDF im Hintergrund.
+Die Aktivitätseinstellungen zeigen den Status und gegebenenfalls den Fehlergrund.
+Fertige JPEG-Seitenbilder werden beim Lesen seitenweise geladen. Ein Schloss im Dokumenttab
 kennzeichnet das geschützte PDF. Zeichenwerkzeuge und Diskussionen an den
 Markierungen funktionieren im gemeinsamen Viewer. Die Seitenbilder unterstützen
 weder Textauswahl noch PDF-Textsuche. Bildschirmaufnahmen bleiben möglich.

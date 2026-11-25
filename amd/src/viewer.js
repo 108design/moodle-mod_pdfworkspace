@@ -1051,36 +1051,64 @@ export async function init(
                 // Render stuff
                 var NUM_PAGES = 0;
                 var oldPageNumber;
+                const contentWrapper = document.getElementById('content-wrapper');
+                const viewer = document.getElementById('viewer');
+                const currentPageInput = document.getElementById('currentPage');
+                let requestedPosition = null;
+                let editingPageNumber = false;
 
                 /**
-                 * This function determines which page the user should see after the scroll event
-                 * @param {type} e
-                 * @returns {void}
+                 * Align a page to the viewer's own scroll viewport.
+                 *
+                 * @param {number} number Page number
                  */
-                function handleScroll(e) {
-                    var height = document.getElementById('viewer').clientHeight;
-                    var visiblePageNum = Math.round((((e.target.scrollTop * 100) / height) * NUM_PAGES) / 100) + 1;
+                function scrollToPage(number) {
+                    const page = document.getElementById('pageContainer' + number);
+                    const viewportTop = contentWrapper.getBoundingClientRect().top + contentWrapper.clientTop;
+                    contentWrapper.scrollTop += page.getBoundingClientRect().top - viewportTop;
+                    // The final page can be visible even when the browser cannot align its top.
+                    requestedPosition = {number, top: contentWrapper.scrollTop};
+                }
 
-                    var visiblePage = document.querySelector(
-                        '.page[data-page-number="' + visiblePageNum + '"][data-loaded="false"]'
-                    );
-                    var visiblePageAfter = document.querySelector(
-                        '.page[data-page-number="' + (visiblePageNum + 1) + '"][data-loaded="false"]'
-                    );
-                    var visiblePageBefore = document.querySelector(
-                        '.page[data-page-number="' + (visiblePageNum - 1) + '"][data-loaded="false"]'
-                    );
+                /**
+                 * Find the first page that extends below the top of the scroll viewport.
+                 *
+                 * @returns {number}
+                 */
+                function visiblePageNumber() {
+                    const top = contentWrapper.scrollTop;
+                    if (requestedPosition && Math.abs(top - requestedPosition.top) <= 1) {
+                        return requestedPosition.number;
+                    }
+                    requestedPosition = null;
+                    if (top > 0 && contentWrapper.scrollHeight - contentWrapper.clientHeight - top <= 1) {
+                        return NUM_PAGES;
+                    }
+                    const viewportTop = contentWrapper.getBoundingClientRect().top + contentWrapper.clientTop;
+                    let first = 0;
+                    let last = NUM_PAGES - 1;
+                    while (first < last) {
+                        const middle = Math.floor((first + last) / 2);
+                        if (viewer.children[middle].getBoundingClientRect().bottom > viewportTop + 1) {
+                            last = middle;
+                        } else {
+                            first = middle + 1;
+                        }
+                    }
+                    return first + 1;
+                }
 
-                    if (visiblePage) {
-                        setTimeout(function () {
-                            UI.renderPage(visiblePageNum, RENDER_OPTIONS);
-                            if (visiblePageAfter) UI.renderPage(visiblePageNum + 1, RENDER_OPTIONS);
-                            if (visiblePageBefore) UI.renderPage(visiblePageNum - 1, RENDER_OPTIONS);
-                        });
-                    } else {
-                        // Anyway if the other pages are not loaded, they should be loaded.
-                        if (visiblePageAfter) UI.renderPage(visiblePageNum + 1, RENDER_OPTIONS);
-                        if (visiblePageBefore) UI.renderPage(visiblePageNum - 1, RENDER_OPTIONS);
+                /**
+                 * Render the current page and its neighbours, and update the sidebar.
+                 *
+                 * @param {number} visiblePageNum Page number
+                 */
+                function showPage(visiblePageNum) {
+                    for (const number of [visiblePageNum, visiblePageNum - 1, visiblePageNum + 1]) {
+                        const page = document.getElementById('pageContainer' + number);
+                        if (page?.dataset.loaded === 'false') {
+                            UI.renderPage(number, RENDER_OPTIONS);
+                        }
                     }
                     if (
                         visiblePageNum !== oldPageNumber &&
@@ -1089,18 +1117,22 @@ export async function init(
                     ) {
                         UI.renderQuestions(documentId, visiblePageNum);
                     }
-                    document.getElementById('currentPage').value = visiblePageNum;
+                    if (!editingPageNumber) {
+                        currentPageInput.value = visiblePageNum;
+                    }
                     oldPageNumber = visiblePageNum;
                 }
 
                 // Add EventListener to GUI-Elements.
                 // Add scroll event to dynamically load the single pages of the pdf.
                 var scrollTimer = null;
-                document.getElementById('content-wrapper').addEventListener('scroll', function (e) {
-                    if (scrollTimer) {
-                        clearTimeout(scrollTimer);
-                    }
-                    scrollTimer = setTimeout(handleScroll, 500, e);
+                contentWrapper.addEventListener('scroll', function () {
+                    clearTimeout(scrollTimer);
+                    scrollTimer = setTimeout(() => {
+                        if (NUM_PAGES) {
+                            showPage(visiblePageNumber());
+                        }
+                    }, 500);
                 });
 
                 // Add click event to cancel-Button of commentswrapper to close the comments view and load the questions of this page.
@@ -1557,7 +1589,7 @@ export async function init(
                                     RENDER_OPTIONS.rotate =
                                         parseInt(localStorage.getItem(_documentObject.pdfdocid + '/rotate'), 10) || rotate;
 
-                                    var viewer = document.getElementById('viewer');
+                                    requestedPosition = null;
                                     viewer.innerHTML = '';
                                     NUM_PAGES = pdf.numPages;
                                     for (var i = 0; i < NUM_PAGES; i++) {
@@ -1588,14 +1620,16 @@ export async function init(
                                             }).height;
                                             $('#body-wrapper').css('height', pageheight100 + 40);
                                         }
-                                        document.getElementById('currentPage').value = _page;
-                                        document.getElementById('currentPage').max = NUM_PAGES;
+                                        currentPageInput.value = _page;
+                                        currentPageInput.max = NUM_PAGES;
+                                        oldPageNumber = _page;
                                         document.getElementById('sumPages').innerHTML = NUM_PAGES;
 
                                         //pick annotation, if the annotation id has been passed
                                         if (_annoid !== null) {
                                             UI.pickAnnotation(_page, _annoid, _commid);
                                         } else {
+                                            scrollToPage(_page);
                                             UI.renderAllQuestions(documentId, _page);
                                         }
 
@@ -2028,16 +2062,11 @@ export async function init(
                             localStorage.setItem(_documentObject.pdfdocid + '/rotate', RENDER_OPTIONS.rotate % 360);
                             _page = parseInt(document.getElementById('currentPage').value);
 
-                            let pagecontainer = document.getElementById('pageContainer' + _page);
                             let loader = document.createElement('div');
                             loader.id = 'loader';
 
                             document.body.appendChild(loader);
-                            render().then(function () {
-                                $('#content-wrapper').scrollTop(
-                                    document.getElementById('pageContainer' + _page).offsetTop
-                                );
-                            }).finally(function () {
+                            render().finally(function () {
                                 loader.remove();
                             });
                         }
@@ -2125,42 +2154,40 @@ export async function init(
 
                 // Jump to Page
                 (function () {
-                    var currentPageInput = $('#currentPage');
-                    var oldPage = currentPageInput.val();
-
-                    function jumpToPage() {
-                        var numPages = parseInt($('#sumPages').html(), 10);
-                        var newPage = parseInt(currentPageInput.val(), 10);
-
-                        var inputValid = false;
-                        if (Number.isInteger(newPage)) {
-                            if (newPage >= 1 && newPage <= numPages) {
-                                inputValid = true;
-                            }
-                        }
-
-                        if (!inputValid) {
-                            currentPageInput.val(oldPage);
+                    function jumpToPage(number) {
+                        editingPageNumber = false;
+                        if (!Number.isInteger(number) || number < 1 || number > NUM_PAGES) {
+                            currentPageInput.value = oldPageNumber ?? _page;
                             return;
                         }
-
-                        oldPage = newPage;
-                        $('#content-wrapper').scrollTop(document.getElementById('pageContainer' + newPage).offsetTop);
+                        scrollToPage(number);
+                        showPage(number);
                     }
 
                     // Add eventListener for inputfield and buttons
-                    currentPageInput.change(jumpToPage);
+                    currentPageInput.addEventListener('input', () => {
+                        editingPageNumber = true;
+                    });
+                    currentPageInput.addEventListener('change', () => jumpToPage(currentPageInput.valueAsNumber));
+                    currentPageInput.addEventListener('blur', () => {
+                        editingPageNumber = false;
+                        currentPageInput.value = oldPageNumber ?? _page;
+                    });
+                    currentPageInput.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            jumpToPage(currentPageInput.valueAsNumber);
+                        }
+                    });
 
                     $('#nextPage').click(function () {
-                        currentPageInput.val(parseInt(currentPageInput.val(), 10) + 1);
-                        currentPageInput.change();
+                        jumpToPage((oldPageNumber ?? _page) + 1);
                         setTimeout(function () {
                             document.getElementById('pdfworkspace_cursor').click();
                         }, 100);
                     });
                     $('#prevPage').click(function () {
-                        currentPageInput.val(parseInt(currentPageInput.val(), 10) - 1);
-                        currentPageInput.change();
+                        jumpToPage((oldPageNumber ?? _page) - 1);
                         setTimeout(function () {
                             document.getElementById('pdfworkspace_cursor').click();
                         }, 100);

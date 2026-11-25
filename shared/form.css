@@ -6,14 +6,14 @@
  */
 
 /* Keep the native checkbox and its label aligned beside the linked help. */
-#page-mod-pdfworkspace-mod .form-check:has(> #id_courseimporthide) {
+#page-mod-pdfworkspace-mod .form-check:has(> :is(#id_courseimporthide, .pdfworkspace-pending-removal)) {
     display: flex;
     align-items: center;
     gap: .5rem;
     padding-inline-start: 0;
 }
 
-#page-mod-pdfworkspace-mod #id_courseimporthide {
+#page-mod-pdfworkspace-mod :is(#id_courseimporthide, .pdfworkspace-pending-removal) {
     position: static;
     flex: 0 0 auto;
     float: none;
@@ -25,8 +25,17 @@
     margin: 0;
 }
 
-#page-mod-pdfworkspace-mod .form-check:has(> #id_courseimporthide) > div:not(:has(*)) {
+#page-mod-pdfworkspace-mod .form-check:has(> :is(#id_courseimporthide, .pdfworkspace-pending-removal)) > div:not(:has(*)) {
     display: none !important;
+}
+
+@media (min-width: 768px) {
+    #id_existingdocuments .fitem:has(.pdfworkspace-pending-removal) > .col-form-label {
+        width: 45%;
+    }
+    #id_existingdocuments .fitem:has(.pdfworkspace-pending-removal) > .checkbox {
+        width: 55%;
+    }
 }
 
 .pdfworkspace-course-picker {

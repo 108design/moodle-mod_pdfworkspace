@@ -185,7 +185,8 @@ function pdfworkspace_update_instance($data, $mform) {
     $lock = \mod_pdfworkspace\local\document_removal::lock($data->id);
     $transaction = null;
     try {
-        $transaction = ($coursefiles || $removedocumentids || !empty($data->protecteduploads)) ? $DB->start_delegated_transaction() : null;
+        $transaction = ($coursefiles || $removedocumentids || !empty($data->removepending) || !empty($data->protecteduploads))
+            ? $DB->start_delegated_transaction() : null;
         $DB->update_record('pdfworkspace', $data);
         pdfworkspace_set_mainfile($data, $removedocumentids, $coursefiles, $removalconfirmations);
         pdfworkspace_save_workspace_selection($data);
@@ -319,7 +320,6 @@ function pdfworkspace_delete_instance($id) {
     if (!$DB->delete_records('pdfworkspace_annotations', ['pdfworkspaceid' => $id]) == 1) {
         return false;
     }
-    $DB->delete_records('pdfworkspace_documents', ['pdfworkspaceid' => $id]);
     foreach (\mod_pdfworkspace\local\restricted_documents::listing($id) as $document) {
         $lock = \mod_pdfworkspace\local\restricted_documents::lock($document->id);
         try {
@@ -329,6 +329,7 @@ function pdfworkspace_delete_instance($id) {
             $lock->release();
         }
     }
+    $DB->delete_records('pdfworkspace_documents', ['pdfworkspaceid' => $id]);
 
     // 2.a) Get all comments in this annotator.
     $comments = $DB->get_records('pdfworkspace_comments', ['pdfworkspaceid' => $id]);

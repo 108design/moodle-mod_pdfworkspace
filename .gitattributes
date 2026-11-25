@@ -95,6 +95,8 @@
 "/classes/pdf_export.php" -export-ignore -export-subst
 "/classes/privacy" -export-ignore -export-subst
 "/classes/privacy/provider.php" -export-ignore -export-subst
+"/classes/task" -export-ignore -export-subst
+"/classes/task/render_restricted_document.php" -export-ignore -export-subst
 "/classes/visibility.php" -export-ignore -export-subst
 "/constants.php" -export-ignore -export-subst
 "/controller.php" -export-ignore -export-subst

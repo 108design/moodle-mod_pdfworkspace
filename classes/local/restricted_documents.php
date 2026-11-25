@@ -49,14 +49,37 @@ final class restricted_documents {
     }
 
     /**
-     * Store a rendered upload. Both storage areas become visible together on commit.
+     * Fetch documents still waiting for conversion or with a failed conversion.
+     *
+     * @param int $activityid Workspace instance ID
+     * @return \stdClass[]
+     */
+    public static function pending(int $activityid): array {
+        global $DB;
+        return $DB->get_records(self::TABLE, ['pdfworkspaceid' => $activityid, 'pagecount' => 0], 'id ASC');
+    }
+
+    /**
+     * Format a pending document's status for the activity settings.
+     *
+     * @param \stdClass $document Pending restricted document
+     * @return string
+     */
+    public static function pending_status(\stdClass $document): string {
+        if (!$document->rendererror) {
+            return get_string('restrictedqueued', 'pdfworkspace');
+        }
+        return get_string($document->rendererror, 'pdfworkspace', restricted_renderer::MAX_PAGES);
+    }
+
+    /**
+     * Keep the upload privately beyond the draft area's lifetime and queue its conversion.
      *
      * @param \context_module $context Workspace context
      * @param string $title Plain-text name displayed to viewers
      * @param \stored_file $upload Current user's Moodle draft PDF
-     * @return int New document ID
      */
-    public static function add(\context_module $context, string $title, \stored_file $upload): int {
+    public static function queue(\context_module $context, string $title, \stored_file $upload): void {
         global $DB, $USER;
         require_capability('mod/pdfworkspace:view', $context);
         require_capability(self::MANAGE, $context);
@@ -72,28 +95,18 @@ final class restricted_documents {
             throw new \moodle_exception('restrictedinvalidpdf', 'mod_pdfworkspace');
         }
         $workspace = get_coursemodule_from_id('pdfworkspace', $context->instanceid, 0, false, MUST_EXIST);
-        $directory = make_request_directory();
-        $source = $directory . '/upload.pdf';
-        if (!$upload->copy_content_to($source)) {
-            throw new \moodle_exception('restrictedinvalidpdf', 'mod_pdfworkspace');
-        }
-        $pages = restricted_renderer::render($source, $directory);
-        $storage = get_file_storage();
         $transaction = $DB->start_delegated_transaction();
         try {
             $id = $DB->insert_record(self::TABLE, [
-                'pdfworkspaceid' => $workspace->instance, 'title' => $title, 'pagecount' => count($pages),
+                'pdfworkspaceid' => $workspace->instance, 'title' => $title, 'pagecount' => 0,
             ]);
-            $common = ['contextid' => $context->id, 'component' => 'mod_pdfworkspace', 'itemid' => $id, 'filepath' => '/'];
-            $original = $storage->create_file_from_pathname($common + [
-                'filearea' => self::ORIGINAL, 'filename' => $upload->get_filename(), 'mimetype' => 'application/pdf',
-            ], $source);
-            self::register_in_viewer($workspace->instance, $id, $title, $original);
-            foreach ($pages as $number => $path) {
-                $storage->create_file_from_pathname($common + [
-                    'filearea' => self::PAGE, 'filename' => "page-$number.jpg", 'mimetype' => 'image/jpeg',
-                ], $path);
-            }
+            get_file_storage()->create_file_from_storedfile([
+                'contextid' => $context->id, 'component' => 'mod_pdfworkspace', 'filearea' => self::ORIGINAL,
+                'itemid' => $id, 'filepath' => '/', 'filename' => $upload->get_filename(), 'mimetype' => 'application/pdf',
+            ], $upload);
+            $task = new \mod_pdfworkspace\task\render_restricted_document();
+            $task->set_custom_data(['documentid' => $id]);
+            \core\task\manager::queue_adhoc_task($task);
             $transaction->allow_commit();
         } catch (\Throwable $exception) {
             if (!$transaction->is_disposed()) {
@@ -101,7 +114,50 @@ final class restricted_documents {
             }
             throw $exception;
         }
-        return $id;
+    }
+
+    /**
+     * Publish the images and viewer entry together if the upload is still pending.
+     *
+     * @param \context_module $context Workspace context
+     * @param \stdClass $document Pending document
+     * @param \stored_file $original Private source file
+     * @param string[] $pages Local JPEG paths, keyed by one-based page number
+     * @return bool Whether the document was published
+     */
+    public static function publish(\context_module $context, \stdClass $document, \stored_file $original, array $pages): bool {
+        global $DB;
+        $activitylock = document_removal::lock($document->pdfworkspaceid);
+        $lock = null;
+        try {
+            $lock = self::lock($document->id);
+            $conditions = [
+                'id' => $document->id, 'pdfworkspaceid' => $document->pdfworkspaceid, 'pagecount' => 0, 'rendererror' => null,
+            ];
+            if (!$DB->record_exists(self::TABLE, $conditions)) {
+                return false;
+            }
+            $transaction = $DB->start_delegated_transaction();
+            $storage = get_file_storage();
+            foreach ($pages as $number => $path) {
+                $storage->create_file_from_pathname([
+                    'contextid' => $context->id, 'component' => 'mod_pdfworkspace', 'filearea' => self::PAGE,
+                    'itemid' => $document->id, 'filepath' => '/', 'filename' => "page-$number.jpg", 'mimetype' => 'image/jpeg',
+                ], $path);
+            }
+            self::register_in_viewer($document->pdfworkspaceid, $document->id, $document->title, $original);
+            $DB->set_field(self::TABLE, 'pagecount', count($pages), ['id' => $document->id]);
+            $transaction->allow_commit();
+            return true;
+        } catch (\Throwable $exception) {
+            if (isset($transaction) && !$transaction->is_disposed()) {
+                $transaction->rollback($exception);
+            }
+            throw $exception;
+        } finally {
+            $lock?->release();
+            $activitylock->release();
+        }
     }
 
     /**
@@ -176,7 +232,10 @@ final class restricted_documents {
     public static function original(\context_module $context, int $id): \stored_file {
         require_capability('mod/pdfworkspace:view', $context);
         require_capability(self::DOWNLOAD, $context);
-        self::require_document($context, $id);
+        $document = self::require_document($context, $id);
+        if (!$document->pagecount) {
+            throw new \moodle_exception('filenotfound', 'pdfworkspace');
+        }
         $files = get_file_storage()->get_area_files($context->id, 'mod_pdfworkspace', self::ORIGINAL, $id, 'id', false);
         if (count($files) !== 1) {
             throw new \moodle_exception('filenotfound', 'pdfworkspace');
@@ -189,21 +248,25 @@ final class restricted_documents {
      *
      * @param \context_module $context Workspace context
      * @param int $id Restricted document ID
+     * @param bool $pendingonly Reject a removal from the pending list if the document has become ready
      */
-    public static function remove(\context_module $context, int $id): void {
+    public static function remove(\context_module $context, int $id, bool $pendingonly = false): void {
         global $DB;
         require_capability('mod/pdfworkspace:view', $context);
         require_capability(self::MANAGE, $context);
         $lock = self::lock($id);
         try {
             $document = self::require_document($context, $id);
+            if ($pendingonly && $document->pagecount) {
+                throw new \moodle_exception('restrictedqueuechanged', 'pdfworkspace');
+            }
             $storage = get_file_storage();
             $transaction = $DB->start_delegated_transaction();
             foreach ([self::ORIGINAL, self::PAGE] as $area) {
                 $storage->delete_area_files($context->id, 'mod_pdfworkspace', $area, $document->id);
             }
-            if ($docid = $DB->get_field('pdfworkspace_documents',
-                    ['restrictedid' => $id, 'pdfworkspaceid' => $document->pdfworkspaceid], 'id')) {
+            if ($docid = $DB->get_field('pdfworkspace_documents', 'id',
+                    ['restrictedid' => $id, 'pdfworkspaceid' => $document->pdfworkspaceid])) {
                 document_removal::delete_discussion($context, $document->pdfworkspaceid, $docid);
                 $DB->delete_records('pdfworkspace_documents', ['id' => $docid, 'restrictedid' => $id]);
             }

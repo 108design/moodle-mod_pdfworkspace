@@ -41,7 +41,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         \mod_pdfworkspace\local\admin_help::register_activity_settings();
         $mform =& $this->_form;
         $config = get_config('mod_pdfworkspace');
-        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026111910']));
+        $PAGE->requires->css(new moodle_url('/mod/pdfworkspace/shared/form.css', ['v' => '2026112500']));
         $PAGE->requires->js_call_amd('mod_pdfworkspace/tooltips', 'init');
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -151,6 +151,19 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                 'warning' => get_string('documentdeletewarning', 'pdfworkspace', '{filename}'),
                 'confirm' => get_string('documentdeleteconfirm', 'pdfworkspace'),
             ]]);
+            if ($canprotect) {
+                foreach (\mod_pdfworkspace\local\restricted_documents::pending($this->current->instance) as $document) {
+                    $element = 'removepending[' . $document->id . ']';
+                    $status = \mod_pdfworkspace\local\restricted_documents::pending_status($document);
+                    $label = html_writer::span(s($document->title), 'fw-semibold text-break');
+                    $label .= html_writer::span(s($status), 'd-block form-text');
+                    $remove = get_string('restrictedremovepending', 'pdfworkspace');
+                    $mform->addElement('advcheckbox', $element, $label, $remove, [
+                        'class' => 'pdfworkspace-pending-removal', 'aria-label' => $remove . ' (' . $document->title . ')',
+                    ]);
+                    $mform->setType($element, PARAM_BOOL);
+                }
+            }
         }
 
         // Add a filemanager for new uploads only when editing.
@@ -372,8 +385,9 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
             $errors['files'] = $exception->getMessage();
         }
         $files = $draftfiles ?: [];
+        $protectuploads = false;
         try {
-            pdfworkspace_protected_uploads((string)($data['protecteduploads'] ?? ''), $files, $this->context);
+            $protectuploads = pdfworkspace_protected_uploads((string)($data['protecteduploads'] ?? ''), $files, $this->context);
         } catch (moodle_exception $exception) {
             $field = $this->_form->elementExists('documentprotection') ? 'documentprotection' : 'files';
             $errors[$field] = $exception->getMessage();
@@ -381,8 +395,18 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
         if ($this->current->instance) {
             require_once(__DIR__ . '/locallib.php');
             $documents = pdfworkspace_get_view_documents($this->current->instance, $this->context->id);
-            $kept = 0;
+            $pending = \mod_pdfworkspace\local\restricted_documents::pending($this->current->instance);
+            $removepending = array_filter((array)($data['removepending'] ?? []));
+            $pendingkept = count(array_diff_key($pending, $removepending));
+            $readykept = 0;
             $names = [];
+            foreach (array_diff_key($pending, $removepending) as $document) {
+                $originals = $fs->get_area_files($this->context->id, 'mod_pdfworkspace',
+                    \mod_pdfworkspace\local\restricted_documents::ORIGINAL, $document->id, 'id', false);
+                foreach ($originals as $original) {
+                    $names['/' . $original->get_filename()] = true;
+                }
+            }
             foreach ($documents as $document) {
                 $order = $data['exportorder_' . $document->id] ?? 0;
                 if (empty($document->restrictedid) && ($order < 1 || $order > count($documents))) {
@@ -402,7 +426,7 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                     }
                 }
                 if (!$remove) {
-                    $kept++;
+                    $readykept++;
                     $names[$document->filepath . $document->filename] = true;
                 }
             }
@@ -411,7 +435,11 @@ class mod_pdfworkspace_mod_form extends moodleform_mod {
                     $errors['files'] = get_string('documentalreadyexists', 'pdfworkspace', $file->get_filename());
                 }
             }
-            if (!$kept && !$files && !$coursefiles) {
+            if ($documents && !$readykept && !$coursefiles && ($protectuploads || !$files)
+                    && ($protectuploads || $pendingkept)) {
+                $errors['files'] ??= get_string('restrictedkeeplastready', 'pdfworkspace');
+            }
+            if (!$readykept && !$pendingkept && !$files && !$coursefiles) {
                 $errors['files'] ??= get_string('required');
             }
         } else if (!$files && !$coursefiles) {

@@ -893,6 +893,14 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
 
     $context = context_module::instance($cmid);
     $activityid = (int)$data->id;
+    $pending = \mod_pdfworkspace\local\restricted_documents::pending($activityid);
+    $removepending = array_filter((array)($data->removepending ?? []));
+    if ($removepending) {
+        require_capability(\mod_pdfworkspace\local\restricted_documents::MANAGE, $context);
+        if (array_diff_key($removepending, $pending)) {
+            throw new moodle_exception('restrictedqueuechanged', 'pdfworkspace');
+        }
+    }
     $documents = pdfworkspace_get_view_documents($activityid, $context->id);
     $originaldocumentids = array_keys($documents);
     $withdiscussion = [];
@@ -924,9 +932,20 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
             // Existing documents are never copied into this draft. Check for
             // collisions before changing any stored file.
             $removed = array_fill_keys($removedocumentids, true);
+            $pendingnames = [];
+            foreach (array_diff_key($pending, $removepending) as $document) {
+                $originals = $fs->get_area_files($context->id, 'mod_pdfworkspace',
+                    \mod_pdfworkspace\local\restricted_documents::ORIGINAL, $document->id, 'id', false);
+                foreach ($originals as $original) {
+                    $pendingnames[$original->get_filename()] = true;
+                }
+            }
             foreach ($draftfiles as $draftfile) {
                 $path = $draftfile->get_filepath();
                 $name = $draftfile->get_filename();
+                if (isset($pendingnames[$name])) {
+                    throw new moodle_exception('documentalreadyexists', 'pdfworkspace', '', $name);
+                }
                 foreach ($documents as $document) {
                     if ($document->filepath === $path && $document->filename === $name &&
                             !isset($removed[$document->id])) {
@@ -937,7 +956,13 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
         }
     }
     if (!empty($data->instance) || $protectuploads) {
-        if (count($documents) - count($removedocumentids) + count($draftfiles) + count($coursefiles) < 1) {
+        $readykept = count($documents) - count($removedocumentids);
+        if ($removedocumentids && !$readykept && !$coursefiles && ($protectuploads || !$draftfiles)
+                && ($protectuploads || count($pending) > count($removepending))) {
+            throw new moodle_exception('restrictedkeeplastready', 'pdfworkspace');
+        }
+        $kept = $readykept + count($pending) - count($removepending);
+        if ($kept + count($draftfiles) + count($coursefiles) < 1) {
             throw new moodle_exception('required');
         }
         foreach ($draftfiles as $draftfile) {
@@ -945,6 +970,9 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
                     $draftfile->get_filepath() !== '/') {
                 throw new invalid_parameter_exception('Only PDF files at the root are supported');
             }
+        }
+        foreach (array_keys($removepending) as $documentid) {
+            \mod_pdfworkspace\local\restricted_documents::remove($context, $documentid, true);
         }
         foreach ($removedocumentids as $documentid) {
             $document = $documents[$documentid];
@@ -964,7 +992,7 @@ function pdfworkspace_set_mainfile($data, $removedocumentids = [], $coursefiles 
         foreach ($draftfiles as $draftfile) {
             if ($protectuploads) {
                 $title = \core_text::substr($draftfile->get_filename(), 0, 160);
-                \mod_pdfworkspace\local\restricted_documents::add($context, $title, $draftfile);
+                \mod_pdfworkspace\local\restricted_documents::queue($context, $title, $draftfile);
                 continue;
             }
             $fs->create_file_from_storedfile([

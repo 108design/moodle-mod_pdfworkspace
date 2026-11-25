@@ -27,16 +27,16 @@ namespace mod_pdfworkspace\local;
 /** Run a locally configured Poppler executable without a shell or user-supplied arguments. */
 final class restricted_renderer {
     /** @var int Maximum number of pages accepted per upload. */
-    public const MAX_PAGES = 150;
+    public const MAX_PAGES = 500;
     /** @var int Maximum source PDF size. */
-    public const MAX_BYTES = 25 * 1024 * 1024;
+    public const MAX_BYTES = 64 * 1024 * 1024;
 
     /** @var int Maximum pixel dimension of a rendered page. */
     private const DIMENSION = 1800;
     /** @var int Maximum wall time in seconds for one conversion. */
     private const TIMEOUT = 60;
     /** @var int Maximum combined image size. */
-    private const MAX_OUTPUT = 128 * 1024 * 1024;
+    private const MAX_OUTPUT = 256 * 1024 * 1024;
 
     /**
      * Resolve the explicitly configured executable if conversion is available.
@@ -55,7 +55,7 @@ final class restricted_renderer {
      * Render the source to a bounded set of JPEG pages.
      *
      * @param string $source Local filepath of the copied PDF
-     * @param string $directory Private per-request directory
+     * @param string $directory Private working directory
      * @return string[] Image paths keyed by one-based page number
      */
     public static function render(string $source, string $directory): array {
@@ -84,12 +84,15 @@ final class restricted_renderer {
                 if (!$status['running']) {
                     break;
                 }
-                if (microtime(true) >= $deadline || connection_aborted()) {
-                    proc_terminate($process, 9);
-                    throw new \moodle_exception('restrictedrenderfailed', 'mod_pdfworkspace');
+                if (microtime(true) >= $deadline) {
+                    throw new \moodle_exception('restrictedrendertimeout', 'mod_pdfworkspace');
                 }
-                usleep(50000);
+                self::check_output_size(glob($directory . '/page-*.jpg'));
+                usleep(100000);
             } while (true);
+        } catch (\Throwable $exception) {
+            proc_terminate($process, 9);
+            throw $exception;
         } finally {
             $result = proc_close($process);
         }
@@ -104,13 +107,12 @@ final class restricted_renderer {
         if (count($paths) > self::MAX_PAGES) {
             throw new \moodle_exception('restrictedtoomanypages', 'mod_pdfworkspace', '', self::MAX_PAGES);
         }
+        self::check_output_size($paths);
         $pages = [];
-        $bytes = 0;
         foreach ($paths as $path) {
             $size = getimagesize($path);
-            $bytes += filesize($path);
             if (!preg_match('/^page-(\d+)\.jpg$/D', basename($path), $matches) || $size === false
-                    || $size[2] !== IMAGETYPE_JPEG || max($size[0], $size[1]) > self::DIMENSION || $bytes > self::MAX_OUTPUT) {
+                    || $size[2] !== IMAGETYPE_JPEG || max($size[0], $size[1]) > self::DIMENSION) {
                 throw new \moodle_exception('restrictedrenderfailed', 'mod_pdfworkspace');
             }
             $pages[(int)$matches[1]] = $path;
@@ -120,5 +122,28 @@ final class restricted_renderer {
             throw new \moodle_exception('restrictedrenderfailed', 'mod_pdfworkspace');
         }
         return $pages;
+    }
+
+    /**
+     * Stop the conversion once the JPEGs written to the working directory exceed the budget.
+     *
+     * @param string[]|false $paths Current JPEG paths
+     */
+    private static function check_output_size(array|false $paths): void {
+        if ($paths === false) {
+            throw new \moodle_exception('restrictedrenderfailed', 'mod_pdfworkspace');
+        }
+        clearstatcache();
+        $bytes = 0;
+        foreach ($paths as $path) {
+            $size = filesize($path);
+            if ($size === false) {
+                throw new \moodle_exception('restrictedrenderfailed', 'mod_pdfworkspace');
+            }
+            $bytes += $size;
+            if ($bytes > self::MAX_OUTPUT) {
+                throw new \moodle_exception('restrictedoutputlimit', 'mod_pdfworkspace');
+            }
+        }
     }
 }

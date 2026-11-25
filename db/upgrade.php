@@ -913,5 +913,14 @@ function xmldb_pdfworkspace_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026111908, 'pdfworkspace');
     }
 
+    if ($oldversion < 2026112500) {
+        $table = new xmldb_table('pdfworkspace_restricted');
+        $field = new xmldb_field('rendererror', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'pagecount');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026112500, 'pdfworkspace');
+    }
+
     return true;
 }

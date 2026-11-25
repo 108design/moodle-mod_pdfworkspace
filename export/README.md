@@ -20,19 +20,21 @@ PDF Workspace integration documentation. Copyright 2026 Andreas Giesen
    `/usr/bin/pdftoppm`, under **Site administration → Plugins → Activity modules →
    PDF Workspace → PDF Renderer for Restricted Documents**
    (`mod_pdfworkspace/restrictedpdftoppm`).
-3. Check that the PHP web process can access and run the executable with
-   `proc_open`. On Linux with PHP `open_basedir`, check the effective site
+3. Check that the Moodle cron process can run the executable with
+   `proc_open`. On Linux with PHP `open_basedir`, check the effective PHP
    settings for access to the executable, Moodle's temporary directory and
    `/dev/null` for the renderer's standard streams. Upload and save a small
-   protected PDF in a test activity and open its pages in the browser.
+   protected PDF in a test activity and open its pages once the background task finishes.
 
 To add a protected PDF, use the normal PDF upload field in the activity settings,
 tick **Protect All Newly Uploaded PDFs** and save. The checkbox applies to every
 new file in that upload. Save regular and protected files in separate uploads.
-Each protected file can have up to 150 pages and be up to 25 MiB.
+Each protected PDF can have up to 500 pages, a source file up to 64 MiB and
+page images totalling up to 256 MiB. Moodle and PHP upload limits also apply.
 
-Moodle renders the pages as JPEG images when the file is saved. Once generated,
-the images can be viewed without running Poppler again. The lock in the document
+Moodle cron prepares one restricted PDF at a time per site. The activity
+settings show pending uploads and conversion errors. The viewer loads the
+finished JPEGs one page at a time. The lock in the document
 tab identifies a protected PDF. Drawing tools and annotation discussions work in
 the viewer. Text selection and PDF text search are unavailable on the page images.
 Users can still take screenshots of what they can view.
