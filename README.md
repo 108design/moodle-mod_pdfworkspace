@@ -204,3 +204,5 @@ GNU General Public License version 3 or later. See [LICENSE.md](https://github.c
 Bundled third-party code retains its original licences: MIT for pdf-annotate.js,
 text-clipper and jsPDF; Apache 2.0 for PDF.js and its supporting assets.
 See [thirdpartylibs.xml](thirdpartylibs.xml) and the bundled licence files for details.
+
+The 108design name and logo are subject to the [name and logo notice](TRADEMARKS.md).
