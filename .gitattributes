@@ -136,6 +136,8 @@
 "/lang" -export-ignore -export-subst
 "/lang/de" -export-ignore -export-subst
 "/lang/de/pdfworkspace.php" -export-ignore -export-subst
+"/lang/de_du" -export-ignore -export-subst
+"/lang/de_du/pdfworkspace.php" -export-ignore -export-subst
 "/lang/en" -export-ignore -export-subst
 "/lang/en/pdfworkspace.php" -export-ignore -export-subst
 "/lib.php" -export-ignore -export-subst
